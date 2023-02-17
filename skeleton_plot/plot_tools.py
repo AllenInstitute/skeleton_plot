@@ -27,9 +27,15 @@ def read_depths(cloudpath, filename):
         https://github.com/seung-lab/cloud-files
     filename: full json filename 
     ''' 
-
-
     cf = CloudFiles(cloudpath)
+    depths = cf.get_json(filename)
+
+    if depths is None:
+        if filename not in list(cf):
+            raise FileNotFoundError(f"filename '{filename}' not found in '{cloudpath}'")
+        else:
+            raise ValueError('unable to retrieve file')
+
     return cf.get_json(filename)
 
 
@@ -70,7 +76,7 @@ def read_skeleton(cloudfile_dir, filename,
                                             'compartment':df['type']}, root=0)
     return sk
 
-
+# to meshparty?
 def read_swc(path, columns=SWC_COLUMNS, sep=' ', casts=COLUMN_CASTS):
     """Read an swc file into a pandas dataframe
 
@@ -90,6 +96,7 @@ def read_swc(path, columns=SWC_COLUMNS, sep=' ', casts=COLUMN_CASTS):
     apply_casts(df, casts)
     return df
 
+# this could be deleted in favor of read skeleton
 def path_to_skel(path):
     df = read_swc(path)
     verts = df[['x','y','z']].values
@@ -101,8 +108,8 @@ def path_to_skel(path):
     return sk
 
 # plan to remove compartment colors 
-def plot_cell(ax, sk, title='', plot_radius = False, invert_y = False,  
-                    compartment_colors = {3: "firebrick", 4: "salmon", 2: "steelblue"},
+def plot_cell(ax, sk, title='', line_width = 1, plot_radius = False, plot_soma = False, 
+                    invert_y = False, compartment_colors = {3: "firebrick", 4: "salmon", 2: "steelblue"},
                     x_min_max = None, y_min_max = None):
     """plots a meshparty skeleton obj. 
 
@@ -122,9 +129,6 @@ def plot_cell(ax, sk, title='', plot_radius = False, invert_y = False,
         ax.invert_yaxis()
 
     for compartment, color in compartment_colors.items():
-        lines_x = []
-        lines_y = []
-        guess = None
 
         skn=sk.apply_mask(sk.vertex_properties['compartment']==compartment)
 
@@ -132,9 +136,9 @@ def plot_cell(ax, sk, title='', plot_radius = False, invert_y = False,
             if plot_radius:
                 cover_paths_radius = skn.vertex_properties['radius'].values[cover_path[1:]]*5
             else:
-                cover_paths_radius = [5]*len(cover_path)
+                cover_paths_radius = [line_width]*len(cover_path)
             path_verts = skn.vertices[cover_path,:]
-            segments = np.concatenate([path_verts[:-1, 0:2], path_verts[1:, 0:2]], axis=1).reshape(len(path_verts)-1,2,2)
+            segments = np.concatenate([path_verts[:-2, 0:2], path_verts[1:-1, 0:2], path_verts[2:,0:2]], axis=1).reshape(len(path_verts)-2,3,2)
             lc = LineCollection(segments, linewidths=cover_paths_radius, color=color)
             ax.add_collection(lc)
             
@@ -146,6 +150,15 @@ def plot_cell(ax, sk, title='', plot_radius = False, invert_y = False,
         ax.set_ylim(y_min_max[1], y_min_max[0])
     elif x_min_max:
         ax.set_ylim(y_min_max[0], y_min_max[1])
+    elif x_min_max is None and y_min_max is None:
+        verts = sk.vertices
+        if invert_y:
+            ax.set_ylim(max(verts[:,1]), min(verts[:,1]))
+        else:
+            ax.set_ylim(min(verts[:,1]), max(verts[:,1]))
+        ax.set_xlim(min(verts[:,0]), max(verts[:,0]))
+
     
     sns.despine(left=True, bottom=True)
     ax.set_title(title)
+    plt.show()

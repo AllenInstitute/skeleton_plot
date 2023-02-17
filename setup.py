@@ -17,7 +17,7 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    package_dir={"skeleton_plot": "plot_tools.py"},
+    package_dir={"skeleton_plot": "plot_tools"},
     packages=setuptools.find_packages(where = 'src'),
     python_requires=">=3.6",
 )
