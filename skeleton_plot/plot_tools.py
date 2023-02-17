@@ -1,13 +1,13 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from meshparty import skeleton, skeleton_io
+from meshparty import skeleton
 import seaborn as sns
 from cloudfiles import CloudFiles
-import io
-from meshparty import meshwork
-import nglui 
+import os
+#import nglui 
 from caveclient import CAVEclient
+from matplotlib.collections import LineCollection
 
 
 SWC_COLUMNS = ('id', 'type', 'x', 'y', 'z', 'radius', 'parent',)
@@ -17,46 +17,20 @@ COLUMN_CASTS = {
     'type': int
 }
 
-def read_layer_depths(cloudpath, soma_id = None, filename = 'mouse_me_and_met_avg_layer_depths.json'):
+def read_depths(cloudpath, filename):
     '''
-    if you do not pass a soma id, it will load the average layer bounds file 
-    '''
-    if not soma_id is None:
-        filename = f'{soma_id}_poly.json'
+    enter cloudpath location of layer depths .json file 
+    
+    Parameters
+    ----------
+    cloudpath: directory location of layer file. in cloudpath format as seen in 
+        https://github.com/seung-lab/cloud-files
+    filename: full json filename 
+    ''' 
+
 
     cf = CloudFiles(cloudpath)
     return cf.get_json(filename)
-
-
-def plot_layers(ax, cloudpath, soma_id = None):
-    '''
-    
-    If you do not pass a soma id, it will plot the average layer bounds file. otherwise pass 
-    soma id to plot the neuron and the custom layer bounds for that neuron
-    '''
-    
-    layer_file = read_layer_depths(cloudpath, soma_id)
-    
-    # calculate x min and max on ax 
-    xmin, xmax = ax.get_xlim()
-    
-    if soma_id == None:
-        layer_file = np.array(list(layer_file.values()))*-1
-        
-        [ax.hlines(y_val, xmin = xmin, xmax = xmax) for y_val in layer_file]
-
-    else:
-        for key in layer_file.keys():
-            if key == 'layer_polygons':
-
-                for layer in layer_file[key]:
-                    bound = np.array(layer['path'])
-                    ax.scatter(bound[:,0]*0.3603, bound[:,1]*0.3603, s = 1)
-
-            else:
-                bound = np.array(layer_file[key]['path'])
-            ax.scatter(bound[:,0]*0.3603, bound[:,1]*0.3603, s = 1)
-    
 
 
 def apply_casts(df, casts):
@@ -64,15 +38,22 @@ def apply_casts(df, casts):
     for key, typ in casts.items():
         df[key] = df[key].astype(typ)
 
-    
-
-def read_skeleton(root_id, nuc_id, cloud_path = skel_path, 
+# will be moved to meshparty?
+def read_skeleton(cloudfile_dir, filename,
                  df = None):
-    if cloud_path == skel_path:
-        file_path = cloud_path + f"{root_id}_{nuc_id}/{root_id}_{nuc_id}.swc"
-    elif cloud_path == upright_path or cloud_path == layer_aligned_path:
-        file_path = cloud_path + f"{nuc_id}.swc"
-    #print(file_path)
+    """reads skeleton file from cloudfiles style path
+
+    Args:
+        cloudfile_dir (str): _description_
+        filename (str): _description_
+        df (pd.DataFrame, optional): _description_. Defaults to None.
+
+    Returns:
+        _type_: _description_
+    """
+    if '://' not in cloudfile_dir:
+        cloudfile_dir = 'file://' + cloudfile_dir
+    file_path = os.path.join(cloudfile_dir, filename)
     df = read_swc(file_path)
     if not all(df.index == df['id']):
         # remap id and parent to index to 
@@ -91,16 +72,20 @@ def read_skeleton(root_id, nuc_id, cloud_path = skel_path,
 
 
 def read_swc(path, columns=SWC_COLUMNS, sep=' ', casts=COLUMN_CASTS):
+    """Read an swc file into a pandas dataframe
 
-    """ Read an swc file into a pandas dataframe
-    """
+    Args:
+        path (str): path to swc. if cloud path, use https://storage.googleapis.com/path_here
+        columns (tuple, optional): column labels for swc file. Defaults to ('id', 'type', 'x', 'y', 'z', 'radius', 'parent').
+        sep (str, optional): separator when reading swc into df. Defaults to ' '.
+        casts (dict, optional): type casts for columns in swc. Defaults to {'id': int,'parent': int,'type': int}.
+
+    Returns:
+        df (pd.DataFrame): dataframe of swc data
+    """    
     if "://" not in path:
         path = "file://" + path
 
-    #cloudpath, file = os.path.split(path)
-    #cf = CloudFiles(cloudpath)
-    #path = io.BytesIO(cf.get(file))
-    
     df = pd.read_csv(path, names=columns, comment='#', sep=sep)
     apply_casts(df, casts)
     return df
@@ -115,15 +100,28 @@ def path_to_skel(path):
                                     'compartment':df['type']}, root=0)
     return sk
 
-def plot_cell(ax, sk, title='', invert_ax = True):
+# plan to remove compartment colors 
+def plot_cell(ax, sk, title='', plot_radius = False, invert_y = False,  
+                    compartment_colors = {3: "firebrick", 4: "salmon", 2: "steelblue"},
+                    x_min_max = None, y_min_max = None):
+    """plots a meshparty skeleton obj. 
 
-    
-    #ax.set_ylim(1100, 300)
-    
-    MORPH_COLORS = {3: "firebrick", 4: "salmon", 2: "steelblue"}
-    if min(sk.vertices[:,1]) < 0:    
+    Args:
+        ax (matplotlib.axes._subplots.AxesSubplot): axis on which to plot skeleton
+        sk (meshparty.skeleton.Skeleton): skeleton to be plotted 
+        title (str, optional): plot title. Defaults to ''.
+        plot_radius (bool, optional): whether or not to plot the radius of each node.
+            skeleton must have radius information under sk.vertex_properties['radius'] 
+            Defaults to False.
+        invert_y (bool, optional): flips the y axis. Defaults to False.
+        compartment_colors (dict, optional): _description_. Defaults to {3: "firebrick", 4: "salmon", 2: "steelblue"}.
+        x_min_max (_type_, optional): _description_. Defaults to None.
+        y_min_max (_type_, optional): _description_. Defaults to None.
+    """    
+    if invert_y:    
         ax.invert_yaxis()
-    for compartment, color in MORPH_COLORS.items():
+
+    for compartment, color in compartment_colors.items():
         lines_x = []
         lines_y = []
         guess = None
@@ -131,85 +129,23 @@ def plot_cell(ax, sk, title='', invert_ax = True):
         skn=sk.apply_mask(sk.vertex_properties['compartment']==compartment)
 
         for cover_path in skn.cover_paths:
+            if plot_radius:
+                cover_paths_radius = skn.vertex_properties['radius'].values[cover_path[1:]]*5
+            else:
+                cover_paths_radius = [5]*len(cover_path)
             path_verts = skn.vertices[cover_path,:]
-            ax.plot(path_verts[:,0], path_verts[:,1], c=color, linewidth=1)
+            segments = np.concatenate([path_verts[:-1, 0:2], path_verts[1:, 0:2]], axis=1).reshape(len(path_verts)-1,2,2)
+            lc = LineCollection(segments, linewidths=cover_paths_radius, color=color)
+            ax.add_collection(lc)
             
         ax.set_aspect("equal")
-        
-    if invert_ax:
-        ax.invert_yaxis()
 
+    if x_min_max:
+        ax.set_xlim(x_min_max[0], x_min_max[1])
+    if x_min_max and invert_y:
+        ax.set_ylim(y_min_max[1], y_min_max[0])
+    elif x_min_max:
+        ax.set_ylim(y_min_max[0], y_min_max[1])
     
-    #ax.set_ylim(1100, 300)
     sns.despine(left=True, bottom=True)
-    #ax.set_xticks([])
-    #ax.set_yticks([])
     ax.set_title(title)
-
-
-    
-    
-def load_mws_from_folder(root_id, nuc_id, folder_path = mw_path):
-    
-    filename = f"{root_id}_{nuc_id}/{root_id}_{nuc_id}.h5"
-    
-    cf = CloudFiles(folder_path)
-    binary = cf.get([filename])
-
-
-    with io.BytesIO(cf.get(binary[0]['path'])) as f:
-        f.seek(0)
-        mw = meshwork.load_meshwork(f)
-
-    return mw
-
-def plot_mw_skel(ax, mw, title = '', view_synapses = 'none', pre_color = 'yellowgreen', post_color = 'plum',
-                view_layers = False):
-    '''
-    view synapses can be 'none', 'all', 'pre', 'post'
-    
-    '''
-    
-    
-    MORPH_COLORS = {3: "firebrick", 4: "salmon", 2: "steelblue"}
-    colors = np.ones(len(mw.skeleton.vertices))
-    colors[mw.anno.basal_mesh_labels.skel_mask] = 3
-    colors[mw.anno.apical_mesh_labels.skel_mask] = 4
-    colors[mw.anno.is_axon.skel_mask] = 2
-    
-    ax.invert_yaxis()
-    for compartment, color in MORPH_COLORS.items():
-        lines_x = []
-        lines_y = []
-        guess = None
-
-        skn=mw.skeleton.apply_mask(colors==compartment)
-
-        for cover_path in skn.cover_paths:
-            path_verts = skn.vertices[cover_path,:]
-            ax.plot(path_verts[:,0], path_verts[:,1], c=color, linewidth=1)
-            
-        ax.set_aspect("equal")
-        
-    if view_synapses != 'none':
-        
-        if view_synapses == 'all' or view_synapses == 'pre':
-            presyns = np.array([np.array(x) for x in (mw.anno.pre_syn['pre_pt_position']).values])
-            ax.scatter(presyns[:,0]*4, presyns[:,1]*4, s = 2, c = pre_color)
-            
-        if view_synapses == 'all' or view_synapses == 'post':
-            postsyns = np.array([np.array(x) for x in (mw.anno.post_syn['post_pt_position']).values])
-            ax.scatter(postsyns[:,0]*4, postsyns[:,1]*4, s = 2, c = post_color)
-
-
-        
-    
-    
-    #ax.set_ylim(1100, 300)
-    sns.despine(left=True, bottom=True)
-    #ax.set_xticks([])
-    #ax.set_yticks([])
-    ax.set_title(title)
-    
-    
- 
