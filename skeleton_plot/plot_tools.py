@@ -73,7 +73,8 @@ def read_skeleton(cloudfile_dir, filename,
     edges = df[['id','parent']].iloc[1:].values
     
     sk=skeleton.Skeleton(verts, edges, vertex_properties={'radius':df['radius'], 
-                                            'compartment':df['type']}, root=0)
+                                            'compartment':df['type']}, root=0,
+                                            remove_zero_length_edges=False)
     return sk
 
 # to meshparty?
@@ -108,7 +109,7 @@ def path_to_skel(path):
     return sk
 
 # plan to remove compartment colors 
-def plot_cell(ax, sk, title='', line_width = 1, plot_radius = False, plot_soma = False, 
+def plot_cell(ax, sk: skeleton, title='', line_width = 1, plot_radius = False, plot_soma = False, 
                     invert_y = False, compartment_colors = {3: "firebrick", 4: "salmon", 2: "steelblue"},
                     x_min_max = None, y_min_max = None):
     """plots a meshparty skeleton obj. 
@@ -129,12 +130,16 @@ def plot_cell(ax, sk, title='', line_width = 1, plot_radius = False, plot_soma =
         ax.invert_yaxis()
 
     for compartment, color in compartment_colors.items():
+        
+        compartment_mask = sk.vertex_properties['compartment']==compartment
+        skn=sk.apply_mask(compartment_mask)
 
-        skn=sk.apply_mask(sk.vertex_properties['compartment']==compartment)
-
+        #for cover_path in skn.cover_paths[35:37]:
         for cover_path in skn.cover_paths:
+            
             if plot_radius:
-                cover_paths_radius = skn.vertex_properties['radius'].values[cover_path[1:]]*5
+                cover_paths_radius = skn.vertex_properties['radius'].values[np.intersect1d(cover_path[1:], compartment_mask[compartment_mask].index.values)]*5
+                
             else:
                 cover_paths_radius = [line_width]*len(cover_path)
             path_verts = skn.vertices[cover_path,:]
