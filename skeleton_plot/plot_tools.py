@@ -108,9 +108,9 @@ def path_to_skel(path):
                                     'compartment':df['type']}, root=0)
     return sk
 
-# plan to remove compartment colors 
 def plot_cell(ax, sk: skeleton, title='', line_width = 1, plot_radius = False, plot_soma = False, 
-                    invert_y = False, compartment_colors = {3: "firebrick", 4: "salmon", 2: "steelblue"},
+                    soma_size = 120, invert_y = False, plot_compartment_colors = False, 
+                    compartment_colors = {3: "firebrick", 4: "salmon", 2: "steelblue", 1: "olive"},
                     x_min_max = None, y_min_max = None):
     """plots a meshparty skeleton obj. 
 
@@ -122,32 +122,35 @@ def plot_cell(ax, sk: skeleton, title='', line_width = 1, plot_radius = False, p
             skeleton must have radius information under sk.vertex_properties['radius'] 
             Defaults to False.
         invert_y (bool, optional): flips the y axis. Defaults to False.
-        compartment_colors (dict, optional): _description_. Defaults to {3: "firebrick", 4: "salmon", 2: "steelblue"}.
+        compartment_colors (dict, optional): Color for each compartment. 
+            Defaults to {3: "firebrick", 4: "salmon", 2: "steelblue", 1: "olive"}.
+            1 is soma, 2 is axon, 3 is dendrite (basal), 4 is apical dendrite. 
         x_min_max (_type_, optional): _description_. Defaults to None.
         y_min_max (_type_, optional): _description_. Defaults to None.
     """    
+
     if invert_y:    
         ax.invert_yaxis()
 
     for compartment, color in compartment_colors.items():
         
         compartment_mask = sk.vertex_properties['compartment']==compartment
-        skn=sk.apply_mask(compartment_mask)
-
-        #for cover_path in skn.cover_paths[35:37]:
+        skn = sk.apply_mask(compartment_mask)
         for cover_path in skn.cover_paths:
-            
             if plot_radius:
-                cover_paths_radius = skn.vertex_properties['radius'].values[np.intersect1d(cover_path[1:], compartment_mask[compartment_mask].index.values)]*5
-                
+                cover_paths_radius = np.flip(sk.vertex_properties['radius'].values[np.intersect1d(cover_path[1:], compartment_mask[compartment_mask].index.values)]*line_width)
             else:
                 cover_paths_radius = [line_width]*len(cover_path)
-            path_verts = skn.vertices[cover_path,:]
-            segments = np.concatenate([path_verts[:-2, 0:2], path_verts[1:-1, 0:2], path_verts[2:,0:2]], axis=1).reshape(len(path_verts)-2,3,2)
+            # TODO: pull x verts, y verts, z verts, then people can pick which to plot
+            path_verts = skn.vertices[cover_path,0:2]
+            
+            segments = np.concatenate([path_verts[:-2], path_verts[1:-1], path_verts[2:]], axis=1).reshape(len(path_verts)-2,3,2)
             lc = LineCollection(segments, linewidths=cover_paths_radius, color=color)
             ax.add_collection(lc)
-            
         ax.set_aspect("equal")
+
+    if plot_soma:
+        plt.scatter(sk.root_position[0], sk.root_position[1], s = soma_size, c = compartment_colors[1])
 
     if x_min_max:
         ax.set_xlim(x_min_max[0], x_min_max[1])
@@ -166,4 +169,18 @@ def plot_cell(ax, sk: skeleton, title='', line_width = 1, plot_radius = False, p
     
     sns.despine(left=True, bottom=True)
     ax.set_title(title)
-    plt.show()
+ 
+
+
+def plot_lc_verts(ax, sk, indices, color, line_width = None, radius_map = None):
+    if line_width:
+        radius_map = [line_width]*len(indices)
+
+    path_verts = sk.vertices[indices,0:2]
+    segments = np.concatenate([path_verts[:-2], path_verts[1:-1], path_verts[2:]], axis=1).reshape(len(path_verts)-2,3,2)
+
+    lc = LineCollection(segments, linewidths=radius_map, color=color)
+    ax.add_collection(lc)
+
+
+

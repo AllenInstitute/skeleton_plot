@@ -18,6 +18,6 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     package_dir={"skeleton_plot": "plot_tools"},
-    packages=setuptools.find_packages(where = 'src'),
+    packages=setuptools.find_packages(where = ''),
     python_requires=">=3.6",
 )
