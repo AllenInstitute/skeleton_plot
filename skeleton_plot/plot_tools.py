@@ -111,7 +111,7 @@ def path_to_skel(path):
 def plot_cell(ax, sk: skeleton, title='', line_width = 1, plot_radius = False, plot_soma = False, 
                     soma_size = 120, invert_y = False, plot_compartment_colors = False, 
                     compartment_colors = {3: "firebrick", 4: "salmon", 2: "steelblue", 1: "olive"},
-                    x_min_max = None, y_min_max = None):
+                    x_min_max = None, y_min_max = None, capstyle = 'round', joinstyle = 'round'):
     """plots a meshparty skeleton obj. 
 
     Args:
@@ -138,14 +138,16 @@ def plot_cell(ax, sk: skeleton, title='', line_width = 1, plot_radius = False, p
         skn = sk.apply_mask(compartment_mask)
         for cover_path in skn.cover_paths:
             if plot_radius:
-                cover_paths_radius = np.flip(sk.vertex_properties['radius'].values[np.intersect1d(cover_path[1:], compartment_mask[compartment_mask].index.values)]*line_width)
+                cpl = sk.cover_paths[0][1:]
+                cpm = compartment_mask[compartment_mask].index.values
+                cover_paths_radius = (sk.vertex_properties['radius'].values[[x for x in cpl if x in cpm]]*line_width) # not sure about flip 
             else:
                 cover_paths_radius = [line_width]*len(cover_path)
             # TODO: pull x verts, y verts, z verts, then people can pick which to plot
             path_verts = skn.vertices[cover_path,0:2]
             
             segments = np.concatenate([path_verts[:-2], path_verts[1:-1], path_verts[2:]], axis=1).reshape(len(path_verts)-2,3,2)
-            lc = LineCollection(segments, linewidths=cover_paths_radius, color=color)
+            lc = LineCollection(segments, linewidths=cover_paths_radius, color=color, capstyle = capstyle, joinstyle = joinstyle)
             ax.add_collection(lc)
         ax.set_aspect("equal")
 
@@ -172,7 +174,18 @@ def plot_cell(ax, sk: skeleton, title='', line_width = 1, plot_radius = False, p
  
 
 
-def plot_lc_verts(ax, sk, indices, color, line_width = None, radius_map = None):
+def plot_lc_verts(ax, sk, indices, color = 'red', line_width = None, radius_map = None,
+                        y_lim = None, x_lim = None):
+    if x_lim is None:
+        ax.set_xlim(min(sk.vertices[:,0]), max(sk.vertices[:,0]))
+    else:
+        ax.set_xlim(x_lim[0], x_lim[1])
+
+    if y_lim is None:
+        ax.set_ylim(max(sk.vertices[:,1]), min(sk.vertices[:,1]))
+    else:
+        ax.set_ylim(y_lim[0], y_lim[1])
+    
     if line_width:
         radius_map = [line_width]*len(indices)
 
