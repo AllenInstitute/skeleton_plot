@@ -108,8 +108,8 @@ def path_to_skel(path):
                                     'compartment':df['type']}, root=0)
     return sk
 
-def plot_cell(ax, sk: skeleton, title='', line_width = 1, plot_radius = False, plot_soma = False, 
-                    soma_size = 120, invert_y = False, plot_compartment_colors = False, 
+def plot_cell(ax, sk: skeleton, title='', line_width = 1, x = 'x', y = 'y', plot_radius = False, plot_soma = False, 
+                    soma_size = 120, invert_y = False, plot_compartment_colors = False, color = 'darkslategray',
                     compartment_colors = {3: "firebrick", 4: "salmon", 2: "steelblue", 1: "olive"},
                     x_min_max = None, y_min_max = None, capstyle = 'round', joinstyle = 'round'):
     """plots a meshparty skeleton obj. 
@@ -132,27 +132,36 @@ def plot_cell(ax, sk: skeleton, title='', line_width = 1, plot_radius = False, p
     if invert_y:    
         ax.invert_yaxis()
 
-    for compartment, color in compartment_colors.items():
+    axis_dict = {'x': 0, 'y': 1, 'z': 2}
+    x, y = axis_dict[x], axis_dict[y]
+
+    for cover_path in sk.cover_paths:
         
-        compartment_mask = sk.vertex_properties['compartment']==compartment
-        skn = sk.apply_mask(compartment_mask)
-        for cover_path in skn.cover_paths:
-            if plot_radius:
-                cpl = sk.cover_paths[0][1:]
-                cpm = compartment_mask[compartment_mask].index.values
-                cover_paths_radius = (sk.vertex_properties['radius'].values[[x for x in cpl if x in cpm]]*line_width) # not sure about flip 
-            else:
-                cover_paths_radius = [line_width]*len(cover_path)
-            # TODO: pull x verts, y verts, z verts, then people can pick which to plot
-            path_verts = skn.vertices[cover_path,0:2]
-            
-            segments = np.concatenate([path_verts[:-2], path_verts[1:-1], path_verts[2:]], axis=1).reshape(len(path_verts)-2,3,2)
-            lc = LineCollection(segments, linewidths=cover_paths_radius, color=color, capstyle = capstyle, joinstyle = joinstyle)
-            ax.add_collection(lc)
-        ax.set_aspect("equal")
+        if plot_compartment_colors:
+            colors = [compartment_colors[x] for x in sk.vertex_properties['compartment'][cover_path].values]
+        else:
+            colors = [color]*len(cover_path)
+        
+        if plot_radius:
+            linewidths  = sk.vertex_properties['radius'][cover_path].values*line_width
+        else:
+            linewidths = [line_width]*len(cover_path)
+
+        path_verts = sk.vertices[cover_path][:,[x, y]]
+
+        segments = np.concatenate([path_verts[:-2], path_verts[1:-1], path_verts[2:]], axis=1).reshape(len(path_verts)-2,3,2)
+        lc = LineCollection(segments, linewidths=linewidths, color=colors, capstyle = capstyle, joinstyle = joinstyle)
+        ax.add_collection(lc)
+    ax.set_aspect("equal")
+
 
     if plot_soma:
-        plt.scatter(sk.root_position[0], sk.root_position[1], s = soma_size, c = compartment_colors[1])
+        if plot_compartment_colors:
+            soma_color = compartment_colors[1]
+        else:
+            soma_color = color
+        
+        plt.scatter(sk.root_position[x], sk.root_position[y], s = soma_size, c = soma_color, zorder = 2)
 
     if x_min_max:
         ax.set_xlim(x_min_max[0], x_min_max[1])
@@ -163,10 +172,10 @@ def plot_cell(ax, sk: skeleton, title='', line_width = 1, plot_radius = False, p
     elif x_min_max is None and y_min_max is None:
         verts = sk.vertices
         if invert_y:
-            ax.set_ylim(max(verts[:,1]), min(verts[:,1]))
+            ax.set_ylim(max(verts[:,y]), min(verts[:,y]))
         else:
-            ax.set_ylim(min(verts[:,1]), max(verts[:,1]))
-        ax.set_xlim(min(verts[:,0]), max(verts[:,0]))
+            ax.set_ylim(min(verts[:,y]), max(verts[:,y]))
+        ax.set_xlim(min(verts[:,x]), max(verts[:,x]))
 
     
     sns.despine(left=True, bottom=True)
