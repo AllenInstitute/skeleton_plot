@@ -1,11 +1,12 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from meshparty import skeleton
+from meshparty import skeleton, meshwork
 import seaborn as sns
 from cloudfiles import CloudFiles
 import os
-#import nglui 
+import io
+
 from caveclient import CAVEclient
 from matplotlib.collections import LineCollection
 
@@ -108,26 +109,35 @@ def path_to_skel(path):
                                     'compartment':df['type']}, root=0)
     return sk
 
-def plot_cell(ax, sk: skeleton, title='', line_width = 1, x = 'x', y = 'y', plot_radius = False, plot_soma = False, 
-                    soma_size = 120, invert_y = False, plot_compartment_colors = False, color = 'darkslategray',
-                    compartment_colors = {3: "firebrick", 4: "salmon", 2: "steelblue", 1: "olive"},
-                    x_min_max = None, y_min_max = None, capstyle = 'round', joinstyle = 'round'):
-    """plots a meshparty skeleton obj. 
+def load_mw(filename, folder_path):
+    
+    # filename = f"{root_id}_{nuc_id}/{root_id}_{nuc_id}.h5"
+    
+    cf = CloudFiles(folder_path)
+    binary = cf.get([filename])
 
-    Args:
-        ax (matplotlib.axes._subplots.AxesSubplot): axis on which to plot skeleton
-        sk (meshparty.skeleton.Skeleton): skeleton to be plotted 
-        title (str, optional): plot title. Defaults to ''.
-        plot_radius (bool, optional): whether or not to plot the radius of each node.
-            skeleton must have radius information under sk.vertex_properties['radius'] 
-            Defaults to False.
-        invert_y (bool, optional): flips the y axis. Defaults to False.
-        compartment_colors (dict, optional): Color for each compartment. 
-            Defaults to {3: "firebrick", 4: "salmon", 2: "steelblue", 1: "olive"}.
-            1 is soma, 2 is axon, 3 is dendrite (basal), 4 is apical dendrite. 
-        x_min_max (_type_, optional): _description_. Defaults to None.
-        y_min_max (_type_, optional): _description_. Defaults to None.
-    """    
+    with io.BytesIO(cf.get(binary[0]['path'])) as f:
+        f.seek(0)
+        mw = meshwork.load_meshwork(f)
+
+    return mw
+
+
+def plot_verts(ax, vertices, edges, radii = [], compartments = [], title = '', line_width = 1,
+                 x = 'x', y = 'y',  plot_soma = False, soma_node = 0,
+                color = 'darkslategray', soma_size = 120, invert_y = False, 
+                compartment_colors = {3: "firebrick", 4: "salmon", 2: "steelblue", 1: "olive"},
+                x_min_max = None, y_min_max = None, capstyle = 'round', joinstyle = 'round'
+                ):
+
+    sk=skeleton.Skeleton(vertices, edges, vertex_properties={'radius':pd.Series(radii), 
+                                            'compartment':pd.Series(compartments)}, root=soma_node,
+                                            remove_zero_length_edges=False)
+
+    if len(compartments) != 0 and len(compartments) != len(vertices):
+        raise ValueError('length of compartments must match len of vertices')
+    if len(radii) != 0 and len(radii) != len(vertices):
+        raise ValueError('length of radii must match len of vertices')
 
     if invert_y:    
         ax.invert_yaxis()
@@ -137,15 +147,14 @@ def plot_cell(ax, sk: skeleton, title='', line_width = 1, x = 'x', y = 'y', plot
 
     for cover_path in sk.cover_paths:
         
-        if plot_compartment_colors:
+        if len(compartments) != 0:
             colors = [compartment_colors[x] for x in sk.vertex_properties['compartment'][cover_path].values]
         else:
             colors = [color]*len(cover_path)
-        
-        if plot_radius:
-            linewidths  = sk.vertex_properties['radius'][cover_path].values*line_width
+        if len(radii) == 0:
+            linewidths  = pd.Series([line_width]*len(cover_path))
         else:
-            linewidths = [line_width]*len(cover_path)
+            linewidths = (sk.vertex_properties['radius'][cover_path])*line_width
 
         path_verts = sk.vertices[cover_path][:,[x, y]]
 
@@ -154,9 +163,8 @@ def plot_cell(ax, sk: skeleton, title='', line_width = 1, x = 'x', y = 'y', plot
         ax.add_collection(lc)
     ax.set_aspect("equal")
 
-
     if plot_soma:
-        if plot_compartment_colors:
+        if len(compartments) != 0:
             soma_color = compartment_colors[1]
         else:
             soma_color = color
@@ -180,7 +188,79 @@ def plot_cell(ax, sk: skeleton, title='', line_width = 1, x = 'x', y = 'y', plot
     
     sns.despine(left=True, bottom=True)
     ax.set_title(title)
+        
+
+def plot_skel(ax, sk: skeleton, title='', line_width = 1, x = 'x', y = 'y', plot_radius = False, plot_soma = False, 
+                    soma_size = 120, soma_node = 0, invert_y = False, plot_compartment_colors = False, 
+                    compartments = [], color = 'darkslategray',
+                    compartment_colors = {3: "firebrick", 4: "salmon", 2: "steelblue", 1: "olive"},
+                    x_min_max = None, y_min_max = None, capstyle = 'round', joinstyle = 'round'):
+    """plots a meshparty skeleton obj. 
+
+    Args:
+        ax (matplotlib.axes._subplots.AxesSubplot): axis on which to plot skeleton
+        sk (meshparty.skeleton.Skeleton): skeleton to be plotted 
+        title (str, optional): plot title. Defaults to ''.
+        plot_radius (bool, optional): whether or not to plot the radius of each node.
+            skeleton must have radius information under sk.vertex_properties['radius'] 
+            Defaults to False.
+        invert_y (bool, optional): flips the y axis. Defaults to False.
+        compartment_colors (dict, optional): Color for each compartment. 
+            Defaults to {3: "firebrick", 4: "salmon", 2: "steelblue", 1: "olive"}.
+            1 is soma, 2 is axon, 3 is dendrite (basal), 4 is apical dendrite. 
+        x_min_max (_type_, optional): _description_. Defaults to None.
+        y_min_max (_type_, optional): _description_. Defaults to None.
+    """    
+
+    if plot_compartment_colors:
+        comps = sk.vertex_properties['compartment']
+    else:
+        comps = []
+
+    plot_verts(ax, sk.vertices, sk.edges, radii = sk.vertex_properties['radius'], 
+                compartments = comps, title = title, 
+                line_width = line_width, x = x, y = y,  plot_soma = plot_soma, soma_node = soma_node,
+                color = color, soma_size = soma_size, invert_y = invert_y, 
+                compartment_colors = compartment_colors, x_min_max = x_min_max, 
+                y_min_max = y_min_max, capstyle = capstyle, joinstyle = joinstyle
+                )
  
+
+def plot_mw_skel(ax, mw: meshwork, plot_presyn = False, plot_postsyn = False, presyn_color = 'pink', 
+                    postsyn_color = 'yellow', presyn_size = 5, postsyn_size = 5, presyn_alpha = 1, postsyn_alpha = 1,
+                    title='', line_width = 1, x = 'x', y = 'y', plot_radius = False, plot_soma = False, 
+                    soma_size = 120, invert_y = False, plot_compartment_colors = False, 
+                    compartments = [], color = 'darkslategray',
+                    compartment_colors = {3: "firebrick", 4: "salmon", 2: "steelblue", 1: "olive"},
+                    x_min_max = None, y_min_max = None, capstyle = 'round', joinstyle = 'round',
+                    ):
+    sk = mw.skeleton
+
+    compartments = np.ones(len(sk.vertices))
+    compartments[mw.anno.apical_mesh_labels.skel_index] = 4
+    compartments[mw.anno.basal_mesh_labels.skel_index] = 3
+    compartments[len(mw.anno.is_axon.skel_index)] = 2
+
+    volume_df = nrn.anno.segment_properties.df
+    volume_df['skel_index'] = nrn.anno.segment_properties.mesh_index.to_skel_index_padded
+    sk_volume_df = volume_df.drop_duplicates('skel_index').sort_values('skel_index').reset_index()
+
+    sk.vertex_properties['compartment'] = compartments
+    sk.vertex_properties['radius'] = sk_volume_df['']
+
+    if plot_presyn:
+        presyns = np.array([np.array(x) for x in (mw.anno.pre_syn['pre_pt_position']).values])
+        ax.scatter(presyns[:,x]*4, presyns[:,y]*4, s = presyn_size, c = presyn_color)
+    if plot_postsyn:
+        postsyns = np.array([np.array(x) for x in (mw.anno.pre_syn['post_pt_position']).values])
+        ax.scatter(postsyns[:,x]*4, postsyns[:,y]*4, s = postsyn_size, c = postsyn_color)
+
+
+    plot_skel(ax, sk, title=title, line_width = line_width, x = x, y = y, plot_radius = plot_radius, 
+                    plot_soma = plot_soma, soma_size = soma_size, invert_y = invert_y, 
+                    plot_compartment_colors = plot_compartment_colors, color = color, compartment_colors = compartment_colors,
+                    x_min_max = x_min_max, y_min_max = y_min_max, capstyle = capstyle, joinstyle = joinstyle)
+
 
 
 def plot_lc_verts(ax, sk, indices, color = 'red', line_width = None, radius_map = None,
