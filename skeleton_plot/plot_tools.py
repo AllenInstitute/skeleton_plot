@@ -231,29 +231,55 @@ def plot_skel(ax, sk: skeleton, title='', line_width = 1, x = 'x', y = 'y', plot
                 y_min_max = y_min_max, capstyle = capstyle, joinstyle = joinstyle
                 )
  
-def pull_skel_prop(sk, property):
+# def pull_mw_rad(mw, radius_anno_table = segment_properties):
+#     ''' pulls the segment properties from meshwork anno and translates into skel index'''
+#     r_df = mw.anno.radius_anno_table.df[['r_eff', 'mesh_ind']].set_index('mesh_ind')
+#     rad = r_df.loc[mw.skeleton_indices.to_mesh_region_point].r_eff.values/1000
+#     return rad
+
+
+def pull_skel_prop(mw, property, 
+                    axon_anno = 'is_axon', soma_node = None, 
+                    basal_anno = 'basal_mesh_labels', 
+                    apical_anno = 'apical_mesh_labels'):
     pass
+    # if property == 'radius':
+    #     r_df = mw.anno.segment_properties.df[['r_eff', 'mesh_ind']].set_index('mesh_ind')
+    #     rad = r_df.loc[mw.skeleton_indices.to_mesh_region_point].r_eff.values/1000
+    #     return rad
+    # elif property == 'compartment':
+    #     node_labels = np.full(len(mw.skeleton.vertices), 3)
+    #     soma_node = mw.skeleton.root
+    #     try:
+    #         axon_nodes = len(mw.anno.is_axon.skel_index)
 
 
-def plot_mw_skel(ax, mw: meshwork, plot_presyn = False, plot_postsyn = False, presyn_color = 'pink', 
-                    postsyn_color = 'yellow', presyn_size = 5, postsyn_size = 5, presyn_alpha = 1, postsyn_alpha = 1,
-                    title='', line_width = 1, x = 'x', y = 'y', plot_radius = False, plot_soma = False, 
+
+
+def plot_mw_skel(ax, mw: meshwork, plot_presyn = False, plot_postsyn = False, presyn_color = 'springgreen', 
+                    postsyn_color = 'deepskyblue', presyn_size = 5, postsyn_size = 5, presyn_alpha = 1, postsyn_alpha = 1,
+                    title='', line_width = 1, x = 'x', y = 'y', plot_radius = False, plot_soma = False, soma_node = None,
                     soma_size = 120, invert_y = False, plot_compartment_colors = False,  color = 'darkslategray',
                     compartment_colors = {3: "firebrick", 4: "salmon", 2: "steelblue", 1: "olive"},
                     x_min_max = None, y_min_max = None, capstyle = 'round', joinstyle = 'round',
                     ):
-    sk = mw.skeleton
 
     if plot_compartment_colors:
-        comps = pull_skel_prop(sk, 'compartment')
+        comps = pull_skel_prop(mw, 'compartment')
     else:
         comps = None
     
     if plot_radius:
-        radii = pull_skel_prop(sk, 'radius')
+        radii = pull_skel_prop(mw, 'radius')
     else:
         radii = None
 
+    sk = mw.skeleton
+
+    if plot_soma and soma_node is None:
+        soma_node = sk.root
+
+    
 
     plot_verts(ax, sk.vertices, sk.edges, radii = radii,
                 compartments = comps, title = title, 
@@ -264,7 +290,12 @@ def plot_mw_skel(ax, mw: meshwork, plot_presyn = False, plot_postsyn = False, pr
                 )
 
     # add synapses
-
+    if plot_presyn:
+        presyns = np.array([np.array(x) for x in (mw.anno.pre_syn['pre_pt_position']).values])
+        ax.scatter(presyns[:,0]*4, presyns[:,1]*4, s = presyn_size, c = presyn_color)
+    if plot_postsyn:
+        postsyns = np.array([np.array(x) for x in (mw.anno.post_syn['post_pt_position']).values])
+        ax.scatter(postsyns[:,0]*4, postsyns[:,1]*4, s = postsyn_size, c = postsyn_color)
 
 
 def plot_lc_verts(ax, sk, indices, color = 'red', line_width = None, radius_map = None,
