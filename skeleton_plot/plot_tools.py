@@ -123,7 +123,7 @@ def load_mw(filename, folder_path):
     return mw
 
 
-def plot_verts(ax, vertices, edges, radii = [], compartments = [], title = '', line_width = 1,
+def plot_verts(ax, vertices, edges, radii = None, compartments = None, title = '', line_width = 1,
                  x = 'x', y = 'y',  plot_soma = False, soma_node = 0,
                 color = 'darkslategray', soma_size = 120, invert_y = False, 
                 compartment_colors = {3: "firebrick", 4: "salmon", 2: "steelblue", 1: "olive"},
@@ -134,10 +134,12 @@ def plot_verts(ax, vertices, edges, radii = [], compartments = [], title = '', l
                                             'compartment':pd.Series(compartments)}, root=soma_node,
                                             remove_zero_length_edges=False)
 
-    if len(compartments) != 0 and len(compartments) != len(vertices):
-        raise ValueError('length of compartments must match len of vertices')
-    if len(radii) != 0 and len(radii) != len(vertices):
-        raise ValueError('length of radii must match len of vertices')
+    if compartments is not None: 
+        if len(compartments) != len(vertices):
+            raise ValueError('length of compartments must match len of vertices')
+    if radii is not None:
+        if len(radii) != len(vertices):
+            raise ValueError('length of radii must match len of vertices')
 
     if invert_y:    
         ax.invert_yaxis()
@@ -147,11 +149,11 @@ def plot_verts(ax, vertices, edges, radii = [], compartments = [], title = '', l
 
     for cover_path in sk.cover_paths:
         
-        if len(compartments) != 0:
-            colors = [compartment_colors[x] for x in sk.vertex_properties['compartment'][cover_path].values]
-        else:
+        if compartments is None:
             colors = [color]*len(cover_path)
-        if len(radii) == 0:
+        else:
+            colors = [compartment_colors[x] for x in sk.vertex_properties['compartment'][cover_path].values]
+        if radii is None:
             linewidths  = pd.Series([line_width]*len(cover_path))
         else:
             linewidths = (sk.vertex_properties['radius'][cover_path])*line_width
@@ -164,7 +166,7 @@ def plot_verts(ax, vertices, edges, radii = [], compartments = [], title = '', l
     ax.set_aspect("equal")
 
     if plot_soma:
-        if len(compartments) != 0:
+        if compartments is not None:
             soma_color = compartment_colors[1]
         else:
             soma_color = color
@@ -192,7 +194,7 @@ def plot_verts(ax, vertices, edges, radii = [], compartments = [], title = '', l
 
 def plot_skel(ax, sk: skeleton, title='', line_width = 1, x = 'x', y = 'y', plot_radius = False, plot_soma = False, 
                     soma_size = 120, soma_node = 0, invert_y = False, plot_compartment_colors = False, 
-                    compartments = [], color = 'darkslategray',
+                    color = 'darkslategray',
                     compartment_colors = {3: "firebrick", 4: "salmon", 2: "steelblue", 1: "olive"},
                     x_min_max = None, y_min_max = None, capstyle = 'round', joinstyle = 'round'):
     """plots a meshparty skeleton obj. 
@@ -215,9 +217,13 @@ def plot_skel(ax, sk: skeleton, title='', line_width = 1, x = 'x', y = 'y', plot
     if plot_compartment_colors:
         comps = sk.vertex_properties['compartment']
     else:
-        comps = []
+        comps = None
+    if plot_radius:
+        radii = sk.vertex_properties['radius']
+    else:
+        radii = None
 
-    plot_verts(ax, sk.vertices, sk.edges, radii = sk.vertex_properties['radius'], 
+    plot_verts(ax, sk.vertices, sk.edges, radii = radii, 
                 compartments = comps, title = title, 
                 line_width = line_width, x = x, y = y,  plot_soma = plot_soma, soma_node = soma_node,
                 color = color, soma_size = soma_size, invert_y = invert_y, 
@@ -225,41 +231,39 @@ def plot_skel(ax, sk: skeleton, title='', line_width = 1, x = 'x', y = 'y', plot
                 y_min_max = y_min_max, capstyle = capstyle, joinstyle = joinstyle
                 )
  
+def pull_skel_prop(sk, property):
+    pass
+
 
 def plot_mw_skel(ax, mw: meshwork, plot_presyn = False, plot_postsyn = False, presyn_color = 'pink', 
                     postsyn_color = 'yellow', presyn_size = 5, postsyn_size = 5, presyn_alpha = 1, postsyn_alpha = 1,
                     title='', line_width = 1, x = 'x', y = 'y', plot_radius = False, plot_soma = False, 
-                    soma_size = 120, invert_y = False, plot_compartment_colors = False, 
-                    compartments = [], color = 'darkslategray',
+                    soma_size = 120, invert_y = False, plot_compartment_colors = False,  color = 'darkslategray',
                     compartment_colors = {3: "firebrick", 4: "salmon", 2: "steelblue", 1: "olive"},
                     x_min_max = None, y_min_max = None, capstyle = 'round', joinstyle = 'round',
                     ):
     sk = mw.skeleton
 
-    compartments = np.ones(len(sk.vertices))
-    compartments[mw.anno.apical_mesh_labels.skel_index] = 4
-    compartments[mw.anno.basal_mesh_labels.skel_index] = 3
-    compartments[len(mw.anno.is_axon.skel_index)] = 2
-
-    volume_df = nrn.anno.segment_properties.df
-    volume_df['skel_index'] = nrn.anno.segment_properties.mesh_index.to_skel_index_padded
-    sk_volume_df = volume_df.drop_duplicates('skel_index').sort_values('skel_index').reset_index()
-
-    sk.vertex_properties['compartment'] = compartments
-    sk.vertex_properties['radius'] = sk_volume_df['']
-
-    if plot_presyn:
-        presyns = np.array([np.array(x) for x in (mw.anno.pre_syn['pre_pt_position']).values])
-        ax.scatter(presyns[:,x]*4, presyns[:,y]*4, s = presyn_size, c = presyn_color)
-    if plot_postsyn:
-        postsyns = np.array([np.array(x) for x in (mw.anno.pre_syn['post_pt_position']).values])
-        ax.scatter(postsyns[:,x]*4, postsyns[:,y]*4, s = postsyn_size, c = postsyn_color)
+    if plot_compartment_colors:
+        comps = pull_skel_prop(sk, 'compartment')
+    else:
+        comps = None
+    
+    if plot_radius:
+        radii = pull_skel_prop(sk, 'radius')
+    else:
+        radii = None
 
 
-    plot_skel(ax, sk, title=title, line_width = line_width, x = x, y = y, plot_radius = plot_radius, 
-                    plot_soma = plot_soma, soma_size = soma_size, invert_y = invert_y, 
-                    plot_compartment_colors = plot_compartment_colors, color = color, compartment_colors = compartment_colors,
-                    x_min_max = x_min_max, y_min_max = y_min_max, capstyle = capstyle, joinstyle = joinstyle)
+    plot_verts(ax, sk.vertices, sk.edges, radii = radii,
+                compartments = comps, title = title, 
+                line_width = line_width, x = x, y = y,  plot_soma = plot_soma, soma_node = soma_node,
+                color = color, soma_size = soma_size, invert_y = invert_y, 
+                compartment_colors = compartment_colors, x_min_max = x_min_max, 
+                y_min_max = y_min_max, capstyle = capstyle, joinstyle = joinstyle
+                )
+
+    # add synapses
 
 
 
