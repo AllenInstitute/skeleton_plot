@@ -1,23 +1,36 @@
-import setuptools
+from setuptools import setup, find_packages
+import re
+import os
+import codecs
 
-setuptools.setup(
-    name="skeleton_plot",
-    version="0.0.2",
-    author="Emily Joyce",
-    author_email="emily.m.joyce1@gmail.com",
-    description="tools for visulizing skeletons",
-    #long_description=long_description,
-    #long_description_content_type="text/markdown",
-    #url="https://github.com/pypa/sampleproject",
-    #project_urls={
-        #"Bug Tracker": "https://github.com/pypa/sampleproject/issues",
-    #},
-    classifiers=[
-        "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",
-    ],
-    package_dir={"skeleton_plot": "plot_tools"},
-    packages=setuptools.find_packages(where = ''),
-    python_requires=">=3.6",
+here = os.path.abspath(os.path.dirname(__file__))
+
+
+def read(*parts):
+    with codecs.open(os.path.join(here, *parts), "r") as fp:
+        return fp.read()
+
+
+# def find_version(*file_paths):
+#     version_file = read(*file_paths)
+#     version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M)
+#     if version_match:
+#         return version_match.group(1)
+#     raise RuntimeError("Unable to find version string.")
+
+
+with open("requirements.txt", "r") as f:
+    required = f.read().splitlines()
+
+setup(
+    version='0.0.3',
+    name="skeleton_plots",
+    description="package for plotting skeletons",
+    author="Emily Joyce, Forrest Collman, Casey Schneider-Mizell",
+    author_email="emily.joyce@alleninstitute.org, forrestc@alleninstute.org,caseys@alleninstitute.org,",
+    url="https://github.com/AllenInstitute/skeleton_plot",
+    packages=find_packages(where="."),
+    include_package_data=True,
+    install_requires=required,
+    setup_requires=["pytest-runner"],
 )
