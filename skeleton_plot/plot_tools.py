@@ -123,20 +123,20 @@ def load_mw(filename, folder_path):
     return mw
 
 
-def plot_verts(ax, vertices, edges, radii = None, compartments = None, title = '', line_width = 1,
+def plot_verts(ax, vertices, edges, radii = None, skeleton_colors = None, title = '', line_width = 1,
                  x = 'x', y = 'y',  plot_soma = False, soma_node = 0,
                 color = 'darkslategray', soma_size = 120, invert_y = False, 
-                compartment_colors = {3: "firebrick", 4: "salmon", 2: "steelblue", 1: "olive"},
+                skel_color_map = {3: "firebrick", 4: "salmon", 2: "steelblue", 1: "olive"},
                 x_min_max = None, y_min_max = None, capstyle = 'round', joinstyle = 'round'
                 ):
 
     sk=skeleton.Skeleton(vertices, edges, vertex_properties={'radius':pd.Series(radii), 
-                                            'compartment':pd.Series(compartments)}, root=soma_node,
+                                            'compartment':pd.Series(skeleton_colors)}, root=soma_node,
                                             remove_zero_length_edges=False)
 
-    if compartments is not None: 
-        if len(compartments) != len(vertices):
-            raise ValueError('length of compartments must match len of vertices')
+    if skeleton_colors is not None: 
+        if len(skeleton_colors) != len(vertices):
+            raise ValueError('length of skeleton_colors must match len of vertices')
     if radii is not None:
         if len(radii) != len(vertices):
             raise ValueError('length of radii must match len of vertices')
@@ -149,10 +149,10 @@ def plot_verts(ax, vertices, edges, radii = None, compartments = None, title = '
 
     for cover_path in sk.cover_paths:
         
-        if compartments is None:
+        if skeleton_colors is None:
             colors = [color]*len(cover_path)
         else:
-            colors = [compartment_colors[x] for x in sk.vertex_properties['compartment'][cover_path].values]
+            colors = [skel_color_map[x] for x in sk.vertex_properties['compartment'][cover_path].values]
         if radii is None:
             linewidths  = pd.Series([line_width]*len(cover_path))
         else:
@@ -166,8 +166,8 @@ def plot_verts(ax, vertices, edges, radii = None, compartments = None, title = '
     ax.set_aspect("equal")
 
     if plot_soma:
-        if compartments is not None:
-            soma_color = compartment_colors[1]
+        if skeleton_colors is not None:
+            soma_color = skel_color_map[1]
         else:
             soma_color = color
         
@@ -193,9 +193,10 @@ def plot_verts(ax, vertices, edges, radii = None, compartments = None, title = '
         
 
 def plot_skel(ax, sk: skeleton, title='', line_width = 1, x = 'x', y = 'y', plot_radius = False, plot_soma = False, 
-                    soma_size = 120, soma_node = 0, invert_y = False, plot_compartment_colors = False, 
+                    soma_size = 120, soma_node = 0, invert_y = False, skeleton_colors = None,
+                    pull_compartment_colors = False, 
                     color = 'darkslategray',
-                    compartment_colors = {3: "firebrick", 4: "salmon", 2: "steelblue", 1: "olive"},
+                    skel_color_map = {3: "firebrick", 4: "salmon", 2: "steelblue", 1: "olive"},
                     x_min_max = None, y_min_max = None, capstyle = 'round', joinstyle = 'round'):
     """plots a meshparty skeleton obj. 
 
@@ -207,27 +208,27 @@ def plot_skel(ax, sk: skeleton, title='', line_width = 1, x = 'x', y = 'y', plot
             skeleton must have radius information under sk.vertex_properties['radius'] 
             Defaults to False.
         invert_y (bool, optional): flips the y axis. Defaults to False.
-        compartment_colors (dict, optional): Color for each compartment. 
+        skel_color_map (dict, optional): Color for each compartment. 
             Defaults to {3: "firebrick", 4: "salmon", 2: "steelblue", 1: "olive"}.
             1 is soma, 2 is axon, 3 is dendrite (basal), 4 is apical dendrite. 
         x_min_max (_type_, optional): _description_. Defaults to None.
         y_min_max (_type_, optional): _description_. Defaults to None.
     """    
 
-    if plot_compartment_colors:
-        comps = sk.vertex_properties['compartment']
-    else:
-        comps = None
+    if skeleton_colors is None:
+        if pull_compartment_colors:
+            skeleton_colors = sk.vertex_properties['compartment']
+
     if plot_radius:
         radii = sk.vertex_properties['radius']
     else:
         radii = None
 
     plot_verts(ax, sk.vertices, sk.edges, radii = radii, 
-                compartments = comps, title = title, 
+                skeleton_colors = skeleton_colors, title = title, 
                 line_width = line_width, x = x, y = y,  plot_soma = plot_soma, soma_node = soma_node,
                 color = color, soma_size = soma_size, invert_y = invert_y, 
-                compartment_colors = compartment_colors, x_min_max = x_min_max, 
+                skel_color_map = skel_color_map, x_min_max = x_min_max, 
                 y_min_max = y_min_max, capstyle = capstyle, joinstyle = joinstyle
                 )
  
@@ -238,7 +239,7 @@ def pull_mw_rad(mw, radius_anno_table):
     return rad
 
 
-def pull_mw_comps(mw, basal_table, apical_table, axon_table):
+def pull_mw_skel_colors(mw, basal_table, apical_table, axon_table):
     ''' pulls the segment properties from meshwork anno and translates into skel index'''
     node_labels = np.full(len(mw.skeleton.vertices), 0)
     soma_node = mw.skeleton.root
@@ -259,20 +260,23 @@ def pull_mw_comps(mw, basal_table, apical_table, axon_table):
 
 
 
+
+
+
 def plot_mw_skel(ax, mw: meshwork, plot_presyn = False, plot_postsyn = False, presyn_color = 'deepskyblue', 
                     postsyn_color = 'violet', presyn_size = 5, postsyn_size = 5, presyn_alpha = 1, postsyn_alpha = 1,
                     title='', line_width = 1, x = 'x', y = 'y', radii = None, pull_radius = False, 
                     radius_anno = 'segment_properties', basal_anno = 'basal_mesh_labels', apical_anno = 'apical_mesh_labels', 
                     axon_anno = 'is_axon', plot_soma = False, soma_node = None, soma_size = 120, 
                     invert_y = False, skel_colors = None, pull_compartment_colors = False,  color = 'darkslategray',
-                    compartment_colors = {3: "firebrick", 4: "salmon", 2: "steelblue", 1: "olive"},
+                    skel_color_map = {3: "firebrick", 4: "salmon", 2: "steelblue", 1: "olive"},
                     x_min_max = None, y_min_max = None, capstyle = 'round', joinstyle = 'round',
                     ):
 
     # pull out radius, compartments, soma node
     if skel_colors is None:
         if pull_compartment_colors:
-            skel_colors = pull_mw_comps(mw, basal_anno, apical_anno, axon_anno)
+            skel_colors = pull_mw_skel_colors(mw, basal_anno, apical_anno, axon_anno)
 
     
     if radii is None:
@@ -288,10 +292,10 @@ def plot_mw_skel(ax, mw: meshwork, plot_presyn = False, plot_postsyn = False, pr
     
     # use that information to plot verts 
     plot_verts(ax, sk.vertices, sk.edges, radii = radii,
-                compartments = skel_colors, title = title, 
+                skeleton_colors = skel_colors, title = title, 
                 line_width = line_width, x = x, y = y,  plot_soma = plot_soma, soma_node = soma_node,
                 color = color, soma_size = soma_size, invert_y = invert_y, 
-                compartment_colors = compartment_colors, x_min_max = x_min_max, 
+                skel_color_map = skel_color_map, x_min_max = x_min_max, 
                 y_min_max = y_min_max, capstyle = capstyle, joinstyle = joinstyle
                 )
 
