@@ -6,6 +6,7 @@ import seaborn as sns
 from cloudfiles import CloudFiles
 import os
 import io
+from . import utils
 
 from caveclient import CAVEclient
 from matplotlib.collections import LineCollection
@@ -38,12 +39,6 @@ def read_depths(cloudpath, filename):
             raise ValueError('unable to retrieve file')
 
     return cf.get_json(filename)
-
-
-def apply_casts(df, casts):
-
-    for key, typ in casts.items():
-        df[key] = df[key].astype(typ)
 
 # will be moved to meshparty?
 def read_skeleton(cloudfile_dir, filename,
@@ -95,19 +90,10 @@ def read_swc(path, columns=SWC_COLUMNS, sep=' ', casts=COLUMN_CASTS):
         path = "file://" + path
 
     df = pd.read_csv(path, names=columns, comment='#', sep=sep)
-    apply_casts(df, casts)
+    utils.apply_casts(df, casts)
     return df
 
-# this could be deleted in favor of read skeleton
-def path_to_skel(path):
-    df = read_swc(path)
-    verts = df[['x','y','z']].values
-    verts = verts-1
-    edges = df[['id','parent']].iloc[1:].values
-    print(len(verts),len(edges))
-    sk=skeleton.Skeleton(verts, edges, vertex_properties={'radius':df['radius'], 
-                                    'compartment':df['type']}, root=0)
-    return sk
+
 
 def load_mw(filename, folder_path):
     
@@ -231,37 +217,6 @@ def plot_skel(ax, sk: skeleton, title='', line_width = 1, x = 'x', y = 'y', plot
                 skel_color_map = skel_color_map, x_min_max = x_min_max, 
                 y_min_max = y_min_max, capstyle = capstyle, joinstyle = joinstyle
                 )
- 
-def pull_mw_rad(mw, radius_anno_table):
-    ''' pulls the segment properties from meshwork anno and translates into skel index'''
-    r_df = mw.anno[radius_anno_table].df[['r_eff', 'mesh_ind']].set_index('mesh_ind')
-    rad = r_df.loc[mw.skeleton_indices.to_mesh_region_point].r_eff.values/1000
-    return rad
-
-
-def pull_mw_skel_colors(mw, basal_table, apical_table, axon_table):
-    ''' pulls the segment properties from meshwork anno and translates into skel index'''
-    node_labels = np.full(len(mw.skeleton.vertices), 0)
-    soma_node = mw.skeleton.root
-
-    basal_nodes = mw.anno[basal_table].skel_index
-    node_labels[basal_nodes] = 3
-
-    apical_nodes = mw.anno[apical_table].skel_index
-    node_labels[apical_nodes] = 4
-
-    axon_nodes = mw.anno[axon_table].skel_index
-    node_labels[axon_nodes] = 2
-
-    node_labels[soma_node] = 1
-    
-    return node_labels
-
-
-
-
-
-
 
 def plot_mw_skel(ax, mw: meshwork, plot_presyn = False, plot_postsyn = False, presyn_color = 'deepskyblue', 
                     postsyn_color = 'violet', presyn_size = 5, postsyn_size = 5, presyn_alpha = 1, postsyn_alpha = 1,
@@ -276,12 +231,12 @@ def plot_mw_skel(ax, mw: meshwork, plot_presyn = False, plot_postsyn = False, pr
     # pull out radius, compartments, soma node
     if skel_colors is None:
         if pull_compartment_colors:
-            skel_colors = pull_mw_skel_colors(mw, basal_anno, apical_anno, axon_anno)
+            skel_colors = utils.pull_mw_skel_colors(mw, basal_anno, apical_anno, axon_anno)
 
     
     if radii is None:
         if pull_radius:
-            radii = pull_mw_rad(mw, radius_anno)
+            radii = utils.pull_mw_rad(mw, radius_anno)
 
 
     sk = mw.skeleton
@@ -308,26 +263,6 @@ def plot_mw_skel(ax, mw: meshwork, plot_presyn = False, plot_postsyn = False, pr
         ax.scatter(postsyns[:,0]*4, postsyns[:,1]*4, s = postsyn_size, c = postsyn_color, alpha = postsyn_alpha)
 
 
-def plot_lc_verts(ax, sk, indices, color = 'red', line_width = None, radius_map = None,
-                        y_lim = None, x_lim = None):
-    if x_lim is None:
-        ax.set_xlim(min(sk.vertices[:,0]), max(sk.vertices[:,0]))
-    else:
-        ax.set_xlim(x_lim[0], x_lim[1])
-
-    if y_lim is None:
-        ax.set_ylim(max(sk.vertices[:,1]), min(sk.vertices[:,1]))
-    else:
-        ax.set_ylim(y_lim[0], y_lim[1])
-    
-    if line_width:
-        radius_map = [line_width]*len(indices)
-
-    path_verts = sk.vertices[indices,0:2]
-    segments = np.concatenate([path_verts[:-2], path_verts[1:-1], path_verts[2:]], axis=1).reshape(len(path_verts)-2,3,2)
-
-    lc = LineCollection(segments, linewidths=radius_map, color=color)
-    ax.add_collection(lc)
 
 
 
