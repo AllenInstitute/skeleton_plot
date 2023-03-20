@@ -133,7 +133,7 @@ def plot_verts(ax, vertices, edges, radii = None, skeleton_colors = None, title 
     axis_dict = {'x': 0, 'y': 1, 'z': 2}
     x, y = axis_dict[x], axis_dict[y]
 
-    for cover_path in sk.cover_paths:
+    for cover_path in sk.cover_paths_with_parent():
         
         if skeleton_colors is None:
             colors = [color]*len(cover_path)
@@ -146,7 +146,7 @@ def plot_verts(ax, vertices, edges, radii = None, skeleton_colors = None, title 
 
         path_verts = sk.vertices[cover_path][:,[x, y]]
 
-        segments = np.concatenate([path_verts[:-2], path_verts[1:-1], path_verts[2:]], axis=1).reshape(len(path_verts)-2,3,2)
+        segments = np.concatenate([path_verts[:-1], path_verts[0:-1], path_verts[1:]], axis=1).reshape(len(path_verts)-1,3,2)
         lc = LineCollection(segments, linewidths=linewidths, color=colors, capstyle = capstyle, joinstyle = joinstyle)
         ax.add_collection(lc)
     ax.set_aspect("equal")
