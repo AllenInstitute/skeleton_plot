@@ -24,7 +24,7 @@ with open("requirements.txt", "r") as f:
 
 setup(
     version='0.0.3',
-    name="skeleton_plots",
+    name="skeleton_plot",
     description="package for plotting skeletons",
     author="Emily Joyce, Forrest Collman, Casey Schneider-Mizell",
     author_email="emily.joyce@alleninstitute.org, forrestc@alleninstute.org,caseys@alleninstitute.org,",
