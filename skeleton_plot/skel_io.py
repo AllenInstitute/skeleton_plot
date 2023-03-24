@@ -1,12 +1,13 @@
 import pandas as pd
 from meshparty import skeleton, meshwork
-import seaborn as sns
-from cloudfiles import CloudFiles
+try:
+    from cloudfiles import CloudFiles
+    cf_imported = True
+except:
+    cf_imported = False
 import os
 import io
 from . import utils
-
-from matplotlib.collections import LineCollection
 
 SWC_COLUMNS = ('id', 'type', 'x', 'y', 'z', 'radius', 'parent',)
 COLUMN_CASTS = {
@@ -24,6 +25,9 @@ def read_depths(cloudpath, filename):
     cloudpath: directory location of layer file. in cloudpath format as seen in https://github.com/seung-lab/cloud-files
     filename: full json filename 
     ''' 
+    if cf_imported == False:
+        raise ImportError('cannot use read_depths without cloudfiles.Install https://github.com/seung-lab/cloud-files to continue')
+
     cf = CloudFiles(cloudpath)
     depths = cf.get_json(filename)
 
@@ -93,7 +97,8 @@ def read_swc(path, columns=SWC_COLUMNS, sep=' ', casts=COLUMN_CASTS):
 def load_mw(filename, folder_path):
     
     # filename = f"{root_id}_{nuc_id}/{root_id}_{nuc_id}.h5"
-    
+    if cf_imported == False:
+        raise ImportError('cannot use load_mw without cloudfiles.Install https://github.com/seung-lab/cloud-files to continue')
     cf = CloudFiles(folder_path)
     binary = cf.get([filename])
 

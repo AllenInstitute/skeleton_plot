@@ -30,6 +30,7 @@ setup(
     author_email="emily.joyce@alleninstitute.org, forrestc@alleninstute.org,caseys@alleninstitute.org,",
     url="https://github.com/AllenInstitute/skeleton_plot",
     packages=find_packages(where="."),
+    extras_require={"cloud": ["caveclient>=4.0.0", "cloudfiles"]},
     include_package_data=True,
     install_requires=required,
     setup_requires=["pytest-runner"],
