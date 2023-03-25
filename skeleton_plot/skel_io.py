@@ -16,45 +16,48 @@ COLUMN_CASTS = {
     'type': int
 }
 
-def read_depths(cloudpath, filename):
+def read_depths(directory, filename):
     '''
-    enter cloudpath location of layer depths .json file 
+    enter cloudpath location of layer depths .json file, returns dict
+    of that layer containing vertices
     
     Parameters
     ----------
-    cloudpath: directory location of layer file. in cloudpath format as seen in https://github.com/seung-lab/cloud-files
-    filename: full json filename 
+    directory (str): directory location of layer file. in cloudpath format as seen in https://github.com/seung-lab/cloud-files
+    filename (str): full json filename 
+
+    Returns:
+    layer_bounds (list(dict)): list of dicts with values being the layer name, values containing the (x,y) vertices of the layer (among other things)
     ''' 
     if cf_imported == False:
         raise ImportError('cannot use read_depths without cloudfiles.Install https://github.com/seung-lab/cloud-files to continue')
 
-    cf = CloudFiles(cloudpath)
+    cf = CloudFiles(directory)
     depths = cf.get_json(filename)
 
     if depths is None:
         if filename not in list(cf):
-            raise FileNotFoundError(f"filename '{filename}' not found in '{cloudpath}'")
+            raise FileNotFoundError(f"filename '{filename}' not found in '{directory}'")
         else:
             raise ValueError('unable to retrieve file')
 
     return cf.get_json(filename)
 
 # will be moved to meshparty?
-def read_skeleton(cloudfile_dir, filename,
-                 df = None):
+def read_skeleton(directory, filename):
     """reads skeleton file from cloudfiles style path
 
     Args:
-        cloudfile_dir (str): _description_
-        filename (str): _description_
-        df (pd.DataFrame, optional): _description_. Defaults to None.
+    directory (str): directory location of swc skeleton file. in cloudpath format as seen in https://github.com/seung-lab/cloud-files
+    filename (str): full .swc filename 
+    df (pd.DataFrame, optional): _description_. Defaults to None.
 
     Returns:
-        _type_: _description_
+        skeleton: (meshparty.meshwork.skeleton) skeleton object containing .swc data
     """
-    if '://' not in cloudfile_dir:
-        cloudfile_dir = 'file://' + cloudfile_dir
-    file_path = os.path.join(cloudfile_dir, filename)
+    if '://' not in directory:
+        directory = 'file://' + directory
+    file_path = os.path.join(directory, filename)
     df = read_swc(file_path)
     if not all(df.index == df['id']):
         # remap id and parent to index to 
@@ -94,12 +97,26 @@ def read_swc(path, columns=SWC_COLUMNS, sep=' ', casts=COLUMN_CASTS):
 
 
 
-def load_mw(filename, folder_path):
+def load_mw(directory, filename):
     
     # filename = f"{root_id}_{nuc_id}/{root_id}_{nuc_id}.h5"
+    '''
+    """loads a meshwork file from .h5 into meshparty.meshwork object
+
+    Args:
+        directory (str): directory location of meshwork .h5 file. in cloudpath format as seen in https://github.com/seung-lab/cloud-files
+        filename (str): full .h5 filename 
+
+    Returns:
+        meshwork (meshparty.meshwork): meshwork object containing .h5 data 
+    """    '''
     if cf_imported == False:
         raise ImportError('cannot use load_mw without cloudfiles.Install https://github.com/seung-lab/cloud-files to continue')
-    cf = CloudFiles(folder_path)
+    
+    if "://" not in directory:
+        directory = "file://" + directory
+    
+    cf = CloudFiles(directory)
     binary = cf.get([filename])
 
     with io.BytesIO(cf.get(binary[0]['path'])) as f:

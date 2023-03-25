@@ -9,12 +9,52 @@ from matplotlib.collections import LineCollection
 
 
 
-def plot_verts(ax, vertices, edges, radii = None, skeleton_colors = None, title = '', line_width = 1,
-                 x = 'x', y = 'y',  plot_soma = False, soma_node = 0,
-                color = 'darkslategray', soma_size = 120, invert_y = False, 
+def plot_verts(ax, vertices, edges, radii = None, skeleton_colors = None, 
+                color = 'darkslategray', title = '', line_width = 1,
+                x = 'x', y = 'y',  plot_soma = False, soma_node = 0,
+                soma_size = 120, invert_y = False, 
                 skel_color_map = {3: "firebrick", 4: "salmon", 2: "steelblue", 1: "olive"},
                 x_min_max = None, y_min_max = None, capstyle = 'round', joinstyle = 'round'
                 ):
+    """plots skeleton vertices and edges with various options 
+
+    Args:
+        ax (matplotlib.axes._subplots.AxesSubplot): axis on which to plot the skeleton
+        vertices (np.array, nx2+): vertices to plot. nx2+. If nx3, possible to specify 
+            which of the three axes are plotted in x and y arguments.
+        edges (np.array, nx2): edges between specified vertices
+        radii (iterable, optional): radius of each vertex. Defaults to None.
+        line_width (int, optional): if no radii passed, line_width will be the width 
+            of every node in the plot. if radii are passed, those values will be 
+            multiplied by line_width. Defaults to 1.
+        skeleton_colors (iterable, optional): map of numbers that indicate 
+            color for each vertex recorded in skel_color_map. 
+            Overwrites color argument. Defaults to None.
+        skel_color_map (dict, optional): map of skeleton_colors values->colors. 
+            Defaults to {3: "firebrick", 4: "salmon", 2: "steelblue", 1: "olive"}.
+        color (str, optional): color of all vertices. Defaults to 'darkslategray'.
+        title (str, optional): title to display on plot. Defaults to ''.
+        x (str, optional): which dimension to plot in x. x y or z. Defaults to 'x'.
+        y (str, optional): which dimension to plot in y. x y or z. Defaults to 'y'.
+        plot_soma (bool, optional): whether or not to plot the soma. Defaults to False.
+        soma_node (int, optional): which node in the skeleton represents the soma. 
+            Defaults to 0.
+        soma_size (int, optional): what size the some should be on graph. 
+            Defaults to 120.
+        invert_y (bool, optional): whether or not to invert the y axis. 
+            Defaults to False.
+        x_min_max (tuple, optional): manually specified x min and x max. 
+            Defaults to None, which will set x min and max to the limits of the vertices.
+        y_min_max (tuple, optional): manually specified y min and x max. 
+            Defaults to None, which will set y min and max to the limits of the vertices.
+        capstyle (str, optional): shape of the endpoints. Defaults to 'round'.
+        joinstyle (str, optional): shape of the points between linecollection pieces. 
+            Defaults to 'round'.
+
+    """    
+    
+    
+
 
     sk=skeleton.Skeleton(vertices, edges, vertex_properties={'radius':pd.Series(radii), 
                                             'compartment':pd.Series(skeleton_colors)}, root=soma_node,
@@ -78,34 +118,51 @@ def plot_verts(ax, vertices, edges, radii = None, skeleton_colors = None, title 
     ax.set_title(title)
         
 
-def plot_skel(ax, sk: skeleton, title='', line_width = 1, x = 'x', y = 'y', plot_radius = False, plot_soma = False, 
-                    soma_size = 120, soma_node = 0, invert_y = False, skeleton_colors = None,
-                    pull_compartment_colors = False, 
-                    color = 'darkslategray',
+def plot_skel(ax, sk: skeleton, title='', x = 'x', y = 'y', pull_radius = False, radii = None, 
+                    line_width = 1, plot_soma = False, soma_size = 120, soma_node = 0, 
+                    invert_y = False, skeleton_colors = None, 
+                    pull_compartment_colors = False, color = 'darkslategray',
                     skel_color_map = {3: "firebrick", 4: "salmon", 2: "steelblue", 1: "olive"},
                     x_min_max = None, y_min_max = None, capstyle = 'round', joinstyle = 'round'):
-    """plots a meshparty skeleton obj. 
+    """plots a skeleton object. attempts to pull out arguments from skeleton and plot with plot_verts
 
     Args:
-        ax (matplotlib.axes._subplots.AxesSubplot): axis on which to plot skeleton
-        sk (meshparty.skeleton.Skeleton): skeleton to be plotted 
-        title (str, optional): plot title. Defaults to ''.
-        plot_radius (bool, optional): whether or not to plot the radius of each node.
-            skeleton must have radius information under sk.vertex_properties['radius'] 
-            Defaults to False.
-        invert_y (bool, optional): flips the y axis. Defaults to False.
-        skel_color_map (dict, optional): Color for each compartment. 
+        ax (matplotlib.axes): axis on which to plot the skeleton
+        sk (skeleton): (meshparty.skeleton.Skeleton): skeleton to be plotted 
+        title (str, optional): title to display on plot. Defaults to ''.
+        x (str, optional): which dimension to plot in x. x y or z. Defaults to 'x'.
+        y (str, optional): which dimension to plot in y. x y or z. Defaults to 'y'.
+        pull_radius (bool, optional): whether or not to pull and plot the radius from 
+            sk.vertex_properties['radius']. Defaults to False.
+        radii (iterable, optional): radius of each vertex. overwritten if pull_radius.
+            Defaults to None.
+        plot_soma (bool, optional): whether or not to plot the soma. Defaults to False.
+        soma_size (int, optional): size of soma node to display. Defaults to 120.
+        soma_node (int, optional): the index of the soma node in sk.vertices. Defaults to 0.
+        invert_y (bool, optional): whether or not to invert the y axis. Defaults to False.
+        pull_compartment_colors (bool, optional): whether to pull and plot the compartments in 
+            sk.vertex_properties['compartment']. Defaults to False.
+        skeleton_colors (iterable, optional): map of numbers that indicate 
+            color for each vertex recorded in skel_color_map. 
+            Overwrites color argument. Defaults to None.
+        skel_color_map (dict, optional): map of skeleton_colors values->colors. 
             Defaults to {3: "firebrick", 4: "salmon", 2: "steelblue", 1: "olive"}.
-            1 is soma, 2 is axon, 3 is dendrite (basal), 4 is apical dendrite. 
-        x_min_max (_type_, optional): _description_. Defaults to None.
-        y_min_max (_type_, optional): _description_. Defaults to None.
+        color (str, optional): color of all vertices. Defaults to 'darkslategray'.
+        x_min_max (tuple, optional): manually specified x min and x max. 
+            Defaults to None, which will set x min and max to the limits of the vertices.
+        y_min_max (tuple, optional): manually specified y min and x max. 
+            Defaults to None, which will set y min and max to the limits of the vertices.
+        capstyle (str, optional): shape of the endpoints. Defaults to 'round'.
+        joinstyle (str, optional): shape of the points between linecollection pieces. 
+            Defaults to 'round'.
     """    
+    
 
     if skeleton_colors is None:
         if pull_compartment_colors:
             skeleton_colors = sk.vertex_properties['compartment']
 
-    if plot_radius:
+    if pull_radius:
         radii = sk.vertex_properties['radius']
     else:
         radii = None
