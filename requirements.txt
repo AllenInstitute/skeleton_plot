@@ -1,5 +1,3 @@
 meshparty
-cloud-files
-neuroglancer-annotation-ui 
-caveclient
+matplotlib
 seaborn

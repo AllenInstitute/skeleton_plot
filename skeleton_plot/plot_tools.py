@@ -1,8 +1,6 @@
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 from meshparty import skeleton, meshwork
-import seaborn as sns
 from . import utils
 
 from matplotlib.collections import LineCollection
@@ -97,7 +95,7 @@ def plot_verts(ax, vertices, edges, radii = None, skeleton_colors = None,
         else:
             soma_color = color
         
-        plt.scatter(sk.root_position[x], sk.root_position[y], s = soma_size, c = soma_color, zorder = 2)
+        ax.scatter(sk.root_position[x], sk.root_position[y], s = soma_size, c = soma_color, zorder = 2)
 
     if x_min_max:
         ax.set_xlim(x_min_max[0], x_min_max[1])
@@ -114,7 +112,6 @@ def plot_verts(ax, vertices, edges, radii = None, skeleton_colors = None,
         ax.set_xlim(min(verts[:,x]), max(verts[:,x]))
 
     
-    sns.despine(left=True, bottom=True)
     ax.set_title(title)
         
 
