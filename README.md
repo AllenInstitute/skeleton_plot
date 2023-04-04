@@ -17,8 +17,8 @@ note: more arguments are available to be used with this function such as color a
 use skeleton_plot.plot_tools.plot_skel. This is how the skeleton plot above in the middle was generated:
 
 ```
-skeleton_plot.plot_tools.plot_skel(ax[1], sk,  pull_radius = True, pull_compartment_colors = True,
-    invert_y=True, plot_soma = True, 
+skeleton_plot.plot_tools.plot_skel(ax[1], sk,  pull_radius = True, 
+    pull_compartment_colors = True, invert_y=True, plot_soma = True, 
     line_width = 3, color = 'darkslategray')
 ``` 
 note: in order to use pull_radius argument, store the radius information in sk.vertex_properties['radius'] via 
