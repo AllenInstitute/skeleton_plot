@@ -87,6 +87,7 @@ def plot_verts(ax, vertices, edges, radii = None, skeleton_colors = None,
         segments = np.concatenate([path_verts[:-1], path_verts[0:-1], path_verts[1:]], axis=1).reshape(len(path_verts)-1,3,2)
         lc = LineCollection(segments, linewidths=linewidths, color=colors, capstyle = capstyle, joinstyle = joinstyle)
         ax.add_collection(lc)
+
     ax.set_aspect("equal")
 
     if plot_soma:
@@ -94,7 +95,7 @@ def plot_verts(ax, vertices, edges, radii = None, skeleton_colors = None,
             soma_color = skel_color_map[1]
         else:
             soma_color = color
-        
+        print(sk.root_position[x], sk.root_position[y])
         ax.scatter(sk.root_position[x], sk.root_position[y], s = soma_size, c = soma_color, zorder = 2)
 
     if x_min_max:

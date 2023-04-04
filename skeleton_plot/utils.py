@@ -17,7 +17,7 @@ def pull_mw_skel_colors(mw, basal_table, apical_table, axon_table):
     ''' pulls the segment properties from meshwork anno and translates into skel index'''
     node_labels = np.full(len(mw.skeleton.vertices), 0)
     soma_node = mw.skeleton.root
-
+    
     basal_nodes = mw.anno[basal_table].skel_index
     node_labels[basal_nodes] = 3
 
