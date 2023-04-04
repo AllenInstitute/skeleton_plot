@@ -8,7 +8,7 @@ Skeleton keys is a plotting tool for neuronal skeletons.
 use skeleton_plot.plot_tools.plot_verts. This is how the leftmost skeleton plot above was plotted:
 
 ```
-skelskeleton_plotplot.plot_tools.plot_verts(ax[0], sk.vertices, sk.edges,  
+skelskeleton_plotplot.plot_tools.plot_verts(ax[0], vertices, edges,  
     invert_y=True, line_width = 2.2, color = 'maroon', plot_soma = True)
 ```
 note: more arguments are available to be used with this function such as color and radius maps 
