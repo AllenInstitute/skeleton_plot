@@ -16,14 +16,14 @@ COLUMN_CASTS = {
     'type': int
 }
 
-def read_depths(directory, filename):
+def read_json(directory, filename):
     '''
-    enter cloudpath location of layer depths .json file, returns dict
+    enter cloudpath location of json file(i.e. layer depths .json file), returns dict
     of that layer containing vertices
     
     Parameters
     ----------
-    directory (str): directory location of layer file. in cloudpath format as seen in https://github.com/seung-lab/cloud-files
+    directory (str): directory location of json file. in cloudpath format as seen in https://github.com/seung-lab/cloud-files
     filename (str): full json filename 
 
     Returns:
@@ -33,15 +33,15 @@ def read_depths(directory, filename):
         raise ImportError('cannot use read_depths without cloudfiles.Install https://github.com/seung-lab/cloud-files to continue')
 
     cf = CloudFiles(directory)
-    depths = cf.get_json(filename)
+    js = cf.get_json(filename)
 
-    if depths is None:
+    if js is None:
         if filename not in list(cf):
             raise FileNotFoundError(f"filename '{filename}' not found in '{directory}'")
         else:
             raise ValueError('unable to retrieve file')
 
-    return cf.get_json(filename)
+    return js
 
 # will be moved to meshparty?
 def read_skeleton(directory, filename):

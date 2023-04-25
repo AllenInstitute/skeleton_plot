@@ -23,7 +23,7 @@ with open("requirements.txt", "r") as f:
     required = f.read().splitlines()
 
 setup(
-    version='0.0.3',
+    version='0.0.4',
     name="skeleton_plot",
     description="package for plotting skeletons",
     author="Emily Joyce, Forrest Collman, Casey Schneider-Mizell",
