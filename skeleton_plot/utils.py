@@ -31,7 +31,7 @@ def pull_mw_skel_colors(mw, basal_table, apical_table, axon_table):
     
     return node_labels
 
-def _set_xy_lims(ax, verts = None, invert_y = False, x_min_max = None, 
+def set_xy_lims(ax, verts = None, invert_y = False, x_min_max = None, 
                 y_min_max = None, x = 'x', y = 'y'
                 ):
     '''

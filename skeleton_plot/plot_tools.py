@@ -97,7 +97,7 @@ def plot_verts(vertices, edges, radius = None, skel_colors = None,
         ax.scatter(sk.root_position[x], sk.root_position[y], s = soma_size, c = soma_color, zorder = 2)
 
     
-    utils._set_xy_lims(ax, verts = sk.vertices, invert_y = invert_y, 
+    utils.set_xy_lims(ax, verts = sk.vertices, invert_y = invert_y, 
                 x_min_max = x_min_max, y_min_max = y_min_max, x = x, y = y)
     
     ax.set_title(title)
@@ -106,7 +106,7 @@ def plot_verts(vertices, edges, radius = None, skel_colors = None,
         
 
 def plot_skel(sk: skeleton, title='', x = 'x', y = 'y', pull_radius = False, radius = None, 
-                    line_width = 1, plot_soma = False, soma_size = 120, soma_node = 0, 
+                    line_width = 1, plot_soma = False, soma_size = 120, soma_node = None, 
                     invert_y = False, skel_colors = None, 
                     pull_compartment_colors = False, color = 'darkslategray',
                     skel_color_map = {3: "firebrick", 4: "salmon", 2: "steelblue", 1: "olive"},
@@ -156,6 +156,9 @@ def plot_skel(sk: skeleton, title='', x = 'x', y = 'y', pull_radius = False, rad
         radius = sk.vertex_properties['radius']
     else:
         radius = None
+    
+    if soma_node is None:
+        soma_node = int(sk.root)
 
     plot_verts(sk.vertices, sk.edges, ax = ax, radius = radius, 
                 skel_colors = skel_colors, title = title, 
@@ -193,7 +196,7 @@ def plot_mw_skel(mw: meshwork, plot_presyn = False, plot_postsyn = False, presyn
 
     sk = mw.skeleton
 
-    if plot_soma and soma_node is None:
+    if soma_node is None:
         soma_node = sk.root
 
     # add synapses
@@ -263,11 +266,11 @@ def plot_synapses(presyn_verts = None, postsyn_verts = None, x = 'x', y = 'y',
     if postsyn_verts is not None:
         ax.scatter(postsyn_verts[:,x], postsyn_verts[:,y], s = postsyn_size, c = postsyn_color, alpha = postsyn_alpha)
 
-    utils._set_xy_lims(ax, verts = np.vstack((presyn_verts, postsyn_verts)), invert_y = invert_y, 
+    utils.set_xy_lims(ax, verts = np.vstack((presyn_verts, postsyn_verts)), invert_y = invert_y, 
             x_min_max = x_min_max, y_min_max = y_min_max, x = x, y = y)
 
 
-def plot_layer_lines(y_vals, ax = None, labels = None, buffer_space = .01):
+def plot_layer_lines(y_vals, ax = None, labels = None, buffer_space = .01, line_styles = None):
     """    
     takes a list of y values on which to plot horizontal line across the current x ax.
     Optionally, labels can be provided to label each line.
@@ -288,15 +291,18 @@ def plot_layer_lines(y_vals, ax = None, labels = None, buffer_space = .01):
     x_vals = ax.get_xlim()
 
     if labels is None:
-        for y_val in y_vals:
-            ax.plot([x_vals[0], x_vals[1]], [y_val, y_val])
-    else:
-        # if labels are provided, add them to the lines
-        for y_val, label in zip(y_vals, labels):
-            ax.plot([x_vals[0], x_vals[1]], [y_val, y_val])
-            # add a buffer space between plot and labels
-            buffer = buffer_space * (x_vals[1] - x_vals[0])
-            ax.text(x_vals[1] + buffer, y_val, label, verticalalignment='center')
-        
+        labels = ['']*len(y_vals)
+
+    if line_styles is None:
+        line_styles = [{}]*len(y_vals)
+    elif isinstance(line_styles, dict):
+        line_styles = [line_styles] * len(y_vals)
+
+    for y_val, label, style in zip(y_vals, labels, line_styles):
+        ax.plot([x_vals[0], x_vals[1]], [y_val, y_val], **style)
+        # add a buffer space between plot and labels
+        buffer = buffer_space * (x_vals[1] - x_vals[0])
+        ax.text(x_vals[1] + buffer, y_val, label, verticalalignment='center')
+    
 
 
