@@ -22,7 +22,6 @@ var/
 wheels/
 *.egg-info/
 .installed.cfg
-.bumpversion.cfg
 *.egg
 MANIFEST
 

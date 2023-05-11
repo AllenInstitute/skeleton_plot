@@ -8,29 +8,29 @@ Skeleton keys is a plotting tool for neuronal skeletons.
 use skeleton_plot.plot_tools.plot_verts. This is how the leftmost skeleton plot above was plotted:
 
 ```
-skelskeleton_plotplot.plot_tools.plot_verts(ax[0], vertices, edges,  
+skeleton_plot.plot_tools.plot_verts(vertices, edges,  ax = ax[0], 
     invert_y=True, line_width = 2.2, color = 'maroon', plot_soma = True)
 ```
 note: more arguments are available to be used with this function such as color and radius maps 
 
-## If you have an swc file that you want to plot:
+## If you have an meshparty skeleton that you want to plot:
 use skeleton_plot.plot_tools.plot_skel. This is how the skeleton plot above in the middle was generated:
 
 ```
-skeleton_plot.plot_tools.plot_skel(ax[1], sk,  pull_radius = True, 
+skeleton_plot.plot_tools.plot_skel(sk,  ax = ax[1], pull_radius = True, 
     pull_compartment_colors = True, invert_y=True, plot_soma = True, 
-    line_width = 3, color = 'darkslategray')
+    line_width = 3, color = 'darkslategray') 
 ``` 
 note: in order to use pull_radius argument, store the radius information in sk.vertex_properties['radius'] via 
 ```
 sk.vertex_properties['radius'] = **series with radius of each node of same length as sk.vertices**
 ```
 
-## If you have a meshwork:
+## If you have a meshparty meshwork:
 use skeleton_plot.plot_tools.plot_mw_skel. This is how the skeleton plot on the right was generated:
 
 ```
-skeleton_plot.plot_tools.plot_mw_skel(ax[2], mw, pull_radius = True,
+skeleton_plot.plot_tools.plot_mw_skel(mw, ax = ax[2], pull_radius = True,
     invert_y=True, line_width = 5, plot_soma = True,
     pull_compartment_colors = True, plot_presyn = True,
     plot_postsyn = True)
