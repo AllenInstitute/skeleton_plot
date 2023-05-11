@@ -30,3 +30,25 @@ def pull_mw_skel_colors(mw, basal_table, apical_table, axon_table):
     node_labels[soma_node] = 1
     
     return node_labels
+
+def _set_xy_lims(ax, verts = None, invert_y = False, x_min_max = None, 
+                y_min_max = None, x = 'x', y = 'y'
+                ):
+    '''
+    helps set x and y lims on the given ax
+    '''
+    
+    if x_min_max is not None:
+        ax.set_xlim(x_min_max[0], x_min_max[1])
+    if y_min_max is not None and invert_y:
+        ax.set_ylim(y_min_max[1], y_min_max[0])
+    elif y_min_max is not None:
+        ax.set_ylim(y_min_max[0], y_min_max[1])
+
+    
+    elif x_min_max is None and y_min_max is None:
+        if invert_y:
+            ax.set_ylim(max(verts[:,y]), min(verts[:,y]))
+        else:
+            ax.set_ylim(min(verts[:,y]), max(verts[:,y]))
+        ax.set_xlim(min(verts[:,x]), max(verts[:,x]))

@@ -97,32 +97,12 @@ def plot_verts(vertices, edges, radius = None, skel_colors = None,
         ax.scatter(sk.root_position[x], sk.root_position[y], s = soma_size, c = soma_color, zorder = 2)
 
     
-    _set_xy_lims(ax, verts = sk.vertices, invert_y = invert_y, 
+    utils._set_xy_lims(ax, verts = sk.vertices, invert_y = invert_y, 
                 x_min_max = x_min_max, y_min_max = y_min_max, x = x, y = y)
     
     ax.set_title(title)
 
-def _set_xy_lims(ax, verts = None, invert_y = False, x_min_max = None, 
-                y_min_max = None, x = 'x', y = 'y'
-                ):
-    '''
-    helps set x and y lims on the given ax
-    '''
-    
-    if x_min_max is not None:
-        ax.set_xlim(x_min_max[0], x_min_max[1])
-    if y_min_max is not None and invert_y:
-        ax.set_ylim(y_min_max[1], y_min_max[0])
-    elif y_min_max is not None:
-        ax.set_ylim(y_min_max[0], y_min_max[1])
 
-    
-    elif x_min_max is None and y_min_max is None:
-        if invert_y:
-            ax.set_ylim(max(verts[:,y]), min(verts[:,y]))
-        else:
-            ax.set_ylim(min(verts[:,y]), max(verts[:,y]))
-        ax.set_xlim(min(verts[:,x]), max(verts[:,x]))
         
 
 def plot_skel(sk: skeleton, title='', x = 'x', y = 'y', pull_radius = False, radius = None, 
@@ -283,7 +263,7 @@ def plot_synapses(presyn_verts = None, postsyn_verts = None, x = 'x', y = 'y',
     if postsyn_verts is not None:
         ax.scatter(postsyn_verts[:,x], postsyn_verts[:,y], s = postsyn_size, c = postsyn_color, alpha = postsyn_alpha)
 
-    _set_xy_lims(ax, verts = np.vstack((presyn_verts, postsyn_verts)), invert_y = invert_y, 
+    utils._set_xy_lims(ax, verts = np.vstack((presyn_verts, postsyn_verts)), invert_y = invert_y, 
             x_min_max = x_min_max, y_min_max = y_min_max, x = x, y = y)
 
 
