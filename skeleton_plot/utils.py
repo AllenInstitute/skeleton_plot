@@ -8,7 +8,7 @@ def apply_casts(df, casts):
 
 def pull_mw_rad(mw, radius_anno_table):
     ''' pulls the segment properties from meshwork anno and translates into skel index'''
-    r_df = mw.anno[radius_anno_table].df[['r_eff', 'mesh_ind']].set_index('mesh_ind')
+    r_df = mw.anno[radius_anno_table].df[['r_eff', 'mesh_ind_filt']].set_index('mesh_ind_filt')
     rad = r_df.loc[mw.skeleton_indices.to_mesh_region_point].r_eff.values/1000
     return rad
 
