@@ -11,7 +11,7 @@ axis_dict = {'x': 0, 'y': 1, 'z': 2}
 def plot_verts(vertices, edges, radius = None, skel_colors = None, 
                 color = 'darkslategray', title = '', line_width = 1,
                 x = 'x', y = 'y',  plot_soma = False, soma_node = 0,
-                soma_size = 120, invert_y = False, 
+                soma_size = 120, skel_alpha = 1, invert_y = False, 
                 skel_color_map = {3: "firebrick", 4: "salmon", 2: "steelblue", 1: "olive"},
                 x_min_max = None, y_min_max = None, capstyle = 'round', joinstyle = 'round',
                 ax = None):
@@ -84,7 +84,8 @@ def plot_verts(vertices, edges, radius = None, skel_colors = None,
         path_verts = sk.vertices[cover_path][:,[x, y]]
 
         segments = np.concatenate([path_verts[:-1], path_verts[0:-1], path_verts[1:]], axis=1).reshape(len(path_verts)-1,3,2)
-        lc = LineCollection(segments, linewidths=linewidths, color=colors, capstyle = capstyle, joinstyle = joinstyle)
+        lc = LineCollection(segments, linewidths=linewidths, color=colors, capstyle = capstyle, joinstyle = joinstyle, 
+                                    alpha = skel_alpha)
         ax.add_collection(lc)
 
     ax.set_aspect("equal")
@@ -107,7 +108,7 @@ def plot_verts(vertices, edges, radius = None, skel_colors = None,
 
 def plot_skel(sk: skeleton, title='', x = 'x', y = 'y', pull_radius = False, radius = None, 
                     line_width = 1, plot_soma = False, soma_size = 120, soma_node = None, 
-                    invert_y = False, skel_colors = None, 
+                    invert_y = False, skel_colors = None, skel_alpha = 1,
                     pull_compartment_colors = False, color = 'darkslategray',
                     skel_color_map = {3: "firebrick", 4: "salmon", 2: "steelblue", 1: "olive"},
                     x_min_max = None, y_min_max = None, capstyle = 'round', joinstyle = 'round',
@@ -161,7 +162,7 @@ def plot_skel(sk: skeleton, title='', x = 'x', y = 'y', pull_radius = False, rad
         soma_node = int(sk.root)
 
     plot_verts(sk.vertices, sk.edges, ax = ax, radius = radius, 
-                skel_colors = skel_colors, title = title, 
+                skel_colors = skel_colors, title = title, skel_alpha = skel_alpha,
                 line_width = line_width, x = x, y = y,  plot_soma = plot_soma, soma_node = soma_node,
                 color = color, soma_size = soma_size, invert_y = invert_y, 
                 skel_color_map = skel_color_map, x_min_max = x_min_max, 
@@ -170,7 +171,7 @@ def plot_skel(sk: skeleton, title='', x = 'x', y = 'y', pull_radius = False, rad
 
 def plot_mw_skel(mw: meshwork, plot_presyn = False, plot_postsyn = False, presyn_color = 'deepskyblue', 
                     postsyn_color = 'violet', presyn_size = 5, postsyn_size = 5, syn_res = [4,4,40],
-                    presyn_alpha = 1, postsyn_alpha = 1,
+                    presyn_alpha = 1, postsyn_alpha = 1, skel_alpha = 1,
                     title='', line_width = 1, x = 'x', y = 'y', radius = None, pull_radius = False, 
                     radius_anno = 'segment_properties', basal_anno = 'basal_mesh_labels', apical_anno = 'apical_mesh_labels', 
                     axon_anno = 'is_axon', plot_soma = False, soma_node = None, soma_size = 120, 
@@ -217,7 +218,7 @@ def plot_mw_skel(mw: meshwork, plot_presyn = False, plot_postsyn = False, presyn
     
     # plot verts 
     plot_verts(sk.vertices, sk.edges, ax = ax, radius = radius,
-                skel_colors = skel_colors, title = title, 
+                skel_colors = skel_colors, title = title, skel_alpha = skel_alpha,
                 line_width = line_width, x = x, y = y,  plot_soma = plot_soma, soma_node = soma_node,
                 color = color, soma_size = soma_size, invert_y = invert_y, 
                 skel_color_map = skel_color_map, x_min_max = x_min_max, 
@@ -303,6 +304,6 @@ def plot_layer_lines(y_vals, ax = None, labels = None, buffer_space = .01, line_
         # add a buffer space between plot and labels
         buffer = buffer_space * (x_vals[1] - x_vals[0])
         ax.text(x_vals[1] + buffer, y_val, label, verticalalignment='center')
-    
+
 
 
