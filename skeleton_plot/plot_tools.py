@@ -206,17 +206,17 @@ def plot_mw_skel(mw: meshwork, plot_presyn = False, plot_postsyn = False, presyn
         pre_anno_table = list(pre_anno.keys())[0]
         pre_column = list(pre_anno.values())[0]
         presyn_verts = np.array([np.array(x) for x in (mw.anno[pre_anno_table][pre_column]).values])*syn_res
-    else:
-        presyn_verts = np.empty([0,3])
+        plot_synapses(presyn_verts = presyn_verts, x = x, y = y, presyn_size = presyn_size, 
+                postsyn_size = postsyn_size, presyn_color = presyn_color, postsyn_color = postsyn_color, 
+                presyn_alpha = presyn_alpha, postsyn_alpha = postsyn_alpha, ax = ax)
+
     if plot_postsyn:
         post_anno_table = list(post_anno.keys())[0]
         post_column = list(post_anno.values())[0]
         postsyn_verts = np.array([np.array(x) for x in (mw.anno[post_anno_table][post_column]).values])*syn_res
-    else:
-        postsyn_verts = np.empty([0,3])
-    plot_synapses(presyn_verts = presyn_verts, postsyn_verts = postsyn_verts, x = x, y = y, presyn_size = presyn_size, 
-                    postsyn_size = postsyn_size, presyn_color = presyn_color, postsyn_color = postsyn_color, 
-                    presyn_alpha = presyn_alpha, postsyn_alpha = postsyn_alpha, ax = ax)
+        plot_synapses(postsyn_verts = postsyn_verts, x = x, y = y, presyn_size = presyn_size, 
+                        postsyn_size = postsyn_size, presyn_color = presyn_color, postsyn_color = postsyn_color, 
+                        presyn_alpha = presyn_alpha, postsyn_alpha = postsyn_alpha, ax = ax)
     
     # plot verts 
     plot_verts(sk.vertices, sk.edges, ax = ax, radius = radius,
@@ -269,8 +269,8 @@ def plot_synapses(presyn_verts = None, postsyn_verts = None, x = 'x', y = 'y',
     if postsyn_verts is not None:
         ax.scatter(postsyn_verts[:,x], postsyn_verts[:,y], s = postsyn_size, c = postsyn_color, alpha = postsyn_alpha)
 
-    utils.set_xy_lims(ax, verts = np.vstack((presyn_verts, postsyn_verts)), invert_y = invert_y, 
-            x_min_max = x_min_max, y_min_max = y_min_max, x = x, y = y)
+    # utils.set_xy_lims(ax, verts = np.vstack((presyn_verts, postsyn_verts)), invert_y = invert_y, 
+    #         x_min_max = x_min_max, y_min_max = y_min_max, x = x, y = y)
 
 
 def plot_layer_lines(y_vals, ax = None, labels = None, buffer_space = .01, line_styles = None):
