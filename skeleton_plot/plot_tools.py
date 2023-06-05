@@ -206,12 +206,14 @@ def plot_mw_skel(mw: meshwork, plot_presyn = False, plot_postsyn = False, presyn
         pre_anno_table = list(pre_anno.keys())[0]
         pre_column = list(pre_anno.values())[0]
         presyn_verts = np.array([np.array(x) for x in (mw.anno[pre_anno_table][pre_column]).values])*syn_res
-
+    else:
+        presyn_verts = np.empty([0,3])
     if plot_postsyn:
         post_anno_table = list(post_anno.keys())[0]
         post_column = list(post_anno.values())[0]
         postsyn_verts = np.array([np.array(x) for x in (mw.anno[post_anno_table][post_column]).values])*syn_res
-
+    else:
+        postsyn_verts = np.empty([0,3])
     plot_synapses(presyn_verts = presyn_verts, postsyn_verts = postsyn_verts, x = x, y = y, presyn_size = presyn_size, 
                     postsyn_size = postsyn_size, presyn_color = presyn_color, postsyn_color = postsyn_color, 
                     presyn_alpha = presyn_alpha, postsyn_alpha = postsyn_alpha, ax = ax)
