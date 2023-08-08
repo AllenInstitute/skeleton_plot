@@ -56,8 +56,9 @@ def read_skeleton(directory, filename):
         skeleton: (meshparty.meshwork.skeleton) skeleton object containing .swc data
     """
     if '://' not in directory:
-        directory = 'file://' + directory
-    file_path = os.path.join(directory, filename)
+        directory = utils.cloud_path_join(directory, use_file_scheme = True)
+    
+    file_path = utils.cloud_path_join(directory, filename)
     df = read_swc(file_path)
     if not all(df.index == df['id']):
         # remap id and parent to index to 

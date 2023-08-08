@@ -52,3 +52,16 @@ def set_xy_lims(ax, verts = None, invert_y = False, x_min_max = None,
         else:
             ax.set_ylim(min(verts[:,y]), max(verts[:,y]))
         ax.set_xlim(min(verts[:,x]), max(verts[:,x]))
+
+def cloud_path_join(*args, use_file_scheme = False):
+    """
+    Joins given arguments into a cloud path format with only forward slashes.
+    """
+    
+    stripped_parts = [part.strip('/') for part in args]
+    joined_path = '/'.join(stripped_parts)
+    
+    if use_file_scheme:
+        return f'file://{joined_path}'
+    
+    return joined_path
