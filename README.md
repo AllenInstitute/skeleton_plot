@@ -1,10 +1,27 @@
 Skeleton Plot
-=================================================
+===============
+
 ![cover](images/skels.png)
 
-Skeleton keys is a plotting tool for neuronal skeletons. 
+Skeleton plot is a plotting tool for neuronal skeletons. 
 
-## If you have an object with vertices and edges, or vertices and edges:
+## Installation
+Skeleton plot can be installed from PyPI using ``pip``:
+
+```
+pip install skeleton-plot
+```
+
+You can also install a local clone (e.g. if you want to install in editable mode):
+
+```
+git clone https://github.com/AllenInstitute/skeleton_plot.git
+cd skeleton_plot
+pip install -e .
+```
+
+## Usage
+### If you have an object with vertices and edges, or vertices and edges:
 use skeleton_plot.plot_tools.plot_verts. This is how the leftmost skeleton plot above was plotted:
 
 ```
@@ -13,7 +30,7 @@ skeleton_plot.plot_tools.plot_verts(vertices, edges,  ax = ax[0],
 ```
 note: more arguments are available to be used with this function such as color and radius maps 
 
-## If you have an meshparty skeleton that you want to plot:
+### If you have an meshparty skeleton that you want to plot:
 use skeleton_plot.plot_tools.plot_skel. This is how the skeleton plot above in the middle was generated:
 
 ```
@@ -26,7 +43,7 @@ note: in order to use pull_radius argument, store the radius information in sk.v
 sk.vertex_properties['radius'] = **series with radius of each node of same length as sk.vertices**
 ```
 
-## If you have a meshparty meshwork:
+### If you have a meshparty meshwork:
 use skeleton_plot.plot_tools.plot_mw_skel. This is how the skeleton plot on the right was generated:
 
 ```
