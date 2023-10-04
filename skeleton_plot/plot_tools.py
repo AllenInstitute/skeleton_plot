@@ -308,4 +308,27 @@ def plot_layer_lines(y_vals, ax = None, labels = None, buffer_space = .01, line_
         ax.text(x_vals[1] + buffer, y_val, label, verticalalignment='center')
 
 
+def plot_layer_poly(layer_poly_json, ax = None, res = 0.3603, size = 1, invert_y = True):
+    '''
+    
+    If you do not pass a soma id, it will plot the average layer bounds file. otherwise pass 
+    soma id to plot the neuron and the custom layer bounds for that neuron. 
 
+    '''
+    if ax is None:
+        plt.gca()
+
+    verts = np.empty((0,2))
+    for key in layer_poly_json.keys():
+        if key == 'layer_polygons':
+
+            for layer in layer_poly_json[key]:
+                bound = np.array(layer['path'])
+                verts = np.vstack([verts,bound])
+                ax.scatter(bound[:,0]*res, bound[:,1]*res, s = size)
+
+        else:
+            bound = np.array(layer_poly_json[key]['path'])
+            verts = np.vstack([verts,bound])
+        ax.scatter(bound[:,0]*res, bound[:,1]*res, s = size)
+    utils.set_xy_lims(ax = ax, verts = verts*res, x = 'x', y = 'y', invert_y=invert_y)

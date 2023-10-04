@@ -1,5 +1,7 @@
 import numpy as np
 
+axis_dict = {'x': 0, 'y': 1, 'z': 2}
+
 def apply_casts(df, casts):
 
     for key, typ in casts.items():
@@ -32,12 +34,11 @@ def pull_mw_skel_colors(mw, basal_table, apical_table, axon_table):
     return node_labels
 
 def set_xy_lims(ax, verts = None, invert_y = False, x_min_max = None, 
-                y_min_max = None, x = 'x', y = 'y'
-                ):
+                y_min_max = None, x = 'x', y = 'y'):
     '''
     helps set x and y lims on the given ax
     '''
-    
+    #x, y = axis_dict[x], axis_dict[y]
     if x_min_max is not None:
         ax.set_xlim(x_min_max[0], x_min_max[1])
     if y_min_max is not None and invert_y:
@@ -47,9 +48,12 @@ def set_xy_lims(ax, verts = None, invert_y = False, x_min_max = None,
 
     
     elif x_min_max is None and y_min_max is None:
+        if type(x) == str or type(y) == str:
+            x, y = axis_dict[x], axis_dict[y]
         if invert_y:
             ax.set_ylim(max(verts[:,y]), min(verts[:,y]))
         else:
+
             ax.set_ylim(min(verts[:,y]), max(verts[:,y]))
         ax.set_xlim(min(verts[:,x]), max(verts[:,x]))
 
