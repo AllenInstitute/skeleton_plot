@@ -21,6 +21,12 @@ pip install -e .
 ```
 
 ## Usage
+Usage of ``skeleton_plot`` is described in more detail in the 
+[demo notebook](./docs/demo.ipynb), using example neurons that can be pulled from
+the public-facing [MICrONS dataset](https://www.microns-explorer.org/).
+
+A few examples are also described below:
+
 ### If you have an object with vertices and edges, or vertices and edges:
 use skeleton_plot.plot_tools.plot_verts. This is how the leftmost skeleton plot above was plotted:
 
