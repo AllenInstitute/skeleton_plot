@@ -76,3 +76,12 @@ you may also want to plot synapses, in which case they must be stored in
 - ``mw.anno.pre_syn['pre_pt_position']``
 - ``mw.anno.post_syn['post_pt_position']``
 
+
+### Compartment label conventions 
+Standardized swc files (www.neuromorpho.org) - 
+0 - undefined
+1 - soma
+2 - axon
+3 - (basal) dendrite
+4 - apical dendrite
+5+ - custom

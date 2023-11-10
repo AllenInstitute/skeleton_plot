@@ -155,9 +155,9 @@ def plot_skel(sk: skeleton, title='', x = 'x', y = 'y', pull_radius = False, rad
 
     if pull_radius:
         radius = sk.vertex_properties['radius']
-    else:
-        radius = None
-    
+    # make sure right shape 
+    assert radius is None or len(radius) == len(sk.vertices), "Radius must be None or the same length as sk.vertices"
+
     if soma_node is None:
         soma_node = int(sk.root)
 
@@ -180,14 +180,57 @@ def plot_mw_skel(mw: meshwork, plot_presyn = False, plot_postsyn = False, presyn
                     x_min_max = None, y_min_max = None, capstyle = 'round', joinstyle = 'round',
                     pre_anno = {'pre_syn': 'pre_pt_position'}, post_anno = {'post_syn': 'post_pt_position'},
                     ax = None):
+    """
+    Plots a meshwork skeleton with optional synapse markers, compartment labels, radius plotting.
 
+    Args:
+    - mw (meshwork): The meshwork object containing the skeleton to be plotted.
+    - plot_presyn (bool): Whether to plot presynaptic synapse markers.
+    - plot_postsyn (bool): Whether to plot postsynaptic synapse markers.
+    - presyn_color (str): Color of presynaptic synapse markers.
+    - postsyn_color (str): Color of postsynaptic synapse markers.
+    - presyn_size (int): Size of presynaptic synapse markers.
+    - postsyn_size (int): Size of postsynaptic synapse markers. 
+    - syn_res (list): Resolution of synapse markers. [4,4,40] for minnie, [9.7,9.7,45] for v1dd
+    - presyn_alpha (float): Alpha opacity value of presynaptic synapse markers.
+    - postsyn_alpha (float): Alpha opacity value of postsynaptic synapse markers.
+    - skel_alpha (float): Alpha opacity value of skeleton lines.
+    - title (str): Title of the plot.
+    - line_width (int): Width of skeleton lines. also functions as a scalar of values found in meshwork when pull_radius is set to true
+    - x (str): Name of x-axis.
+    - y (str): Name of y-axis.
+    - radius (float): Radius of skeleton lines.
+    - pull_radius (bool): Whether to pull radius from meshwork.
+    - radius_anno (str): Name of annotation containing radius information. contained in mw.anno
+    - basal_anno (str): Name of annotation containing (basal) dendrite mesh labels. contained in mw.anno
+    - apical_anno (str): Name of annotation containing apical mesh labels. can set to None if no apical. contained in mw.anno
+    - axon_anno (str): Name of annotation containing axon information. contained in mw.anno
+    - plot_soma (bool): Whether to plot soma.
+    - soma_node (int): Index of soma node.
+    - soma_size (int): Size of soma marker.
+    - invert_y (bool): Whether to invert y-axis.
+    - skel_colors (dict): Dictionary of skeleton colors.
+    - pull_compartment_colors (bool): Whether to pull compartment colors from meshwork.
+    - color (str): Color of skeleton lines.
+    - skel_color_map (dict): Dictionary mapping compartment labels to colors.
+    - x_min_max (tuple): Tuple of minimum and maximum x-axis values.
+    - y_min_max (tuple): Tuple of minimum and maximum y-axis values.
+    - capstyle (str): Cap style of skeleton lines.
+    - joinstyle (str): Join style of skeleton lines.
+    - pre_anno (dict): Dictionary of presynaptic annotation table and column names.
+    - post_anno (dict): Dictionary of postsynaptic annotation table and column names.
+    - ax (matplotlib.axes.Axes): Axes object to plot on.
+
+    Returns:
+    - None
+    """
     if ax is None:
         ax = plt.gca()
 
     # pull out radius, compartments, soma node
     if skel_colors is None:
         if pull_compartment_colors:
-            skel_colors = utils.pull_mw_skel_colors(mw, basal_anno, apical_anno, axon_anno)
+            skel_colors = utils.pull_mw_skel_colors(mw, basal_anno, axon_anno, apical_anno)
 
     
     if radius is None:
