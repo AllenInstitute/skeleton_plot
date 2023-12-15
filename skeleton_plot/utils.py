@@ -77,3 +77,26 @@ def cloud_path_join(*args, use_file_scheme = False):
         return f'file://{joined_path}'
     
     return joined_path
+
+def validate_color(color, num_elements):
+    '''
+    Validates if the color input is a single value or a list/array
+    if array, checks that the length matches num_elements
+
+    Args:
+        color (str, list, array): color or array of colors
+        num_elements (int): number of elements to validate against if color is array
+    Returns:
+        color (array): color or color array 
+    Raises:
+        ValueError: if color is array and length does not match num_elements
+    
+    '''
+        
+    if isinstance(color, (list, np.ndarray)):
+        if len(color) != num_elements:
+            raise ValueError(f'Length of color array ({len(color)}) does not match number of elements ({num_elements})')
+        return color
+    
+    else:
+        return np.array([color] * num_elements)

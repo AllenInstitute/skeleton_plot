@@ -1,12 +1,13 @@
-import pandas as pd
-import numpy as np
-from meshparty import skeleton, meshwork
-from . import utils
 import matplotlib.pyplot as plt
-
+import numpy as np
+import pandas as pd
 from matplotlib.collections import LineCollection
+from meshparty import meshwork, skeleton
+
+from . import utils
 
 axis_dict = {'x': 0, 'y': 1, 'z': 2}
+
 
 def plot_verts(vertices, edges, radius = None, skel_colors = None, 
                 color = 'darkslategray', title = '', line_width = 1,
@@ -308,9 +309,12 @@ def plot_synapses(presyn_verts = None, postsyn_verts = None, x = 'x', y = 'y',
     x, y = axis_dict[x], axis_dict[y]
 
     if presyn_verts is not None:
-        ax.scatter(presyn_verts[:,x], presyn_verts[:,y], s = presyn_size, c = presyn_color, alpha = presyn_alpha)
+        presyn_colors = utils.validate_color(presyn_color, len(presyn_verts))
+        for vert, color in zip(presyn_verts, presyn_colors):
+            ax.scatter(vert[x], vert[y], s = presyn_size, c = color, alpha = presyn_alpha)
     if postsyn_verts is not None:
-        ax.scatter(postsyn_verts[:,x], postsyn_verts[:,y], s = postsyn_size, c = postsyn_color, alpha = postsyn_alpha)
+        postsyn_colors = utils.validate_color(postsyn_color, len(postsyn_verts))
+        ax.scatter(postsyn_verts[:,x], postsyn_verts[:,y], s = postsyn_size, c = postsyn_colors, alpha = postsyn_alpha)
 
     # utils.set_xy_lims(ax, verts = np.vstack((presyn_verts, postsyn_verts)), invert_y = invert_y, 
     #         x_min_max = x_min_max, y_min_max = y_min_max, x = x, y = y)
