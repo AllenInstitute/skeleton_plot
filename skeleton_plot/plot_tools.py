@@ -63,11 +63,9 @@ def plot_verts(vertices, edges, radius = None, skel_colors = None,
                                             remove_zero_length_edges=False)
 
     if skel_colors is not None: 
-        if len(skel_colors) != len(vertices):
-            raise ValueError('length of skel_colors must match len of vertices')
+        skel_colors = utils.ensure_length(skel_colors, len(vertices))
     if radius is not None:
-        if len(radius) != len(vertices):
-            raise ValueError('length of radius must match len of vertices')
+        radius = utils.ensure_length(radius, len(vertices), feature_name = 'radius')
 
     x, y = axis_dict[x], axis_dict[y]
 
@@ -309,11 +307,11 @@ def plot_synapses(presyn_verts = None, postsyn_verts = None, x = 'x', y = 'y',
     x, y = axis_dict[x], axis_dict[y]
 
     if presyn_verts is not None:
-        presyn_colors = utils.validate_color(presyn_color, len(presyn_verts))
+        presyn_colors = utils.ensure_length(presyn_color, len(presyn_verts))
         for vert, color in zip(presyn_verts, presyn_colors):
             ax.scatter(vert[x], vert[y], s = presyn_size, c = color, alpha = presyn_alpha)
     if postsyn_verts is not None:
-        postsyn_colors = utils.validate_color(postsyn_color, len(postsyn_verts))
+        postsyn_colors = utils.ensure_length(postsyn_color, len(postsyn_verts))
         ax.scatter(postsyn_verts[:,x], postsyn_verts[:,y], s = postsyn_size, c = postsyn_colors, alpha = postsyn_alpha)
 
     # utils.set_xy_lims(ax, verts = np.vstack((presyn_verts, postsyn_verts)), invert_y = invert_y, 
