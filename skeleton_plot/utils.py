@@ -78,25 +78,25 @@ def cloud_path_join(*args, use_file_scheme = False):
     
     return joined_path
 
-def validate_color(color, num_elements):
+def ensure_length(feature_values, num_elements, feature_name = 'color'):
     '''
-    Validates if the color input is a single value or a list/array
+    Validates if the color/radius/etc input is a single value or a list/array
     if array, checks that the length matches num_elements
 
     Args:
-        color (str, list, array): color or array of colors
+        feature_values (str, list, array): single color/radius/etc or array of color/radius/etc
         num_elements (int): number of elements to validate against if color is array
     Returns:
-        color (array): color or color array 
+        feature_values (str, list, array): single color/radius/etc or array of color/radius/etc
     Raises:
         ValueError: if color is array and length does not match num_elements
     
     '''
         
-    if isinstance(color, (list, np.ndarray)):
-        if len(color) != num_elements:
-            raise ValueError(f'Length of color array ({len(color)}) does not match number of elements ({num_elements})')
-        return color
+    if isinstance(feature_values, (list, np.ndarray)):
+        if len(feature_values) != num_elements:
+            raise ValueError(f'Length of {feature_name} array ({len(feature_values)}) does not match number of elements ({num_elements})')
+        return feature_values
     
     else:
-        return np.array([color] * num_elements)
+        return feature_values

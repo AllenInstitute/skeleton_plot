@@ -308,8 +308,7 @@ def plot_synapses(presyn_verts = None, postsyn_verts = None, x = 'x', y = 'y',
 
     if presyn_verts is not None:
         presyn_colors = utils.ensure_length(presyn_color, len(presyn_verts))
-        for vert, color in zip(presyn_verts, presyn_colors):
-            ax.scatter(vert[x], vert[y], s = presyn_size, c = color, alpha = presyn_alpha)
+        ax.scatter(presyn_verts[:,x], presyn_verts[:,y], s = presyn_size, c = presyn_colors, alpha = presyn_alpha)
     if postsyn_verts is not None:
         postsyn_colors = utils.ensure_length(postsyn_color, len(postsyn_verts))
         ax.scatter(postsyn_verts[:,x], postsyn_verts[:,y], s = postsyn_size, c = postsyn_colors, alpha = postsyn_alpha)
