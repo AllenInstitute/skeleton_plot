@@ -7,6 +7,7 @@ except:
     cf_imported = False
 import os
 import io
+from botocore.exceptions import NoCredentialsError
 from . import utils
 
 SWC_COLUMNS = ('id', 'type', 'x', 'y', 'z', 'radius', 'parent',)
@@ -116,9 +117,15 @@ def load_mw(directory, filename):
     
     if "://" not in directory:
         directory = "file://" + directory
-    
-    cf = CloudFiles(directory)
-    binary = cf.get([filename])
+
+    try: 
+        cf = CloudFiles(directory) # using stored credentials
+        binary = cf.get([filename])
+
+    except NoCredentialsError:
+        cf = CloudFiles(directory, use_https=True) # using https (public credentials)
+        binary = cf.get([filename])
+
 
     with io.BytesIO(cf.get(binary[0]['path'])) as f:
         f.seek(0)
