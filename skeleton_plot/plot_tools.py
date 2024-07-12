@@ -333,7 +333,7 @@ def plot_layer_lines(y_vals, ax = None, labels = None, buffer_space = .01, line_
     """
     
     if ax is None:
-        plt.gca()
+        ax = plt.gca()
     # get x vals
     x_vals = ax.get_xlim()
 
@@ -360,7 +360,7 @@ def plot_layer_poly(layer_poly_json, ax = None, res = 0.3603, size = 1, invert_y
 
     '''
     if ax is None:
-        plt.gca()
+        ax = plt.gca()
 
     verts = np.empty((0,2))
     for key in layer_poly_json.keys():

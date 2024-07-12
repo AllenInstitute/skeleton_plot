@@ -1,5 +1,4 @@
 from setuptools import setup, find_packages
-import re
 import os
 import codecs
 
@@ -27,7 +26,7 @@ setup(
     name="skeleton_plot",
     description="package for plotting skeletons",
     author="Emily Joyce, Forrest Collman, Casey Schneider-Mizell",
-    author_email="emily.joyce@alleninstitute.org, forrestc@alleninstute.org,caseys@alleninstitute.org,",
+    author_email="emily.joyce@alleninstitute.org, forrestc@alleninstitute.org,caseys@alleninstitute.org,",
     url="https://github.com/AllenInstitute/skeleton_plot",
     packages=find_packages(where="."),
     extras_require={"cloud": ["caveclient>=4.0.0", "cloudfiles"]},
