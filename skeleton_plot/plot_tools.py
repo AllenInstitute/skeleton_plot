@@ -96,7 +96,6 @@ def plot_verts(vertices, edges, radius = None, skel_colors = None,
             soma_color = color
         ax.scatter(sk.root_position[x], sk.root_position[y], s = soma_size, c = soma_color, zorder = 2)
 
-    
     utils.set_xy_lims(ax, verts = sk.vertices, invert_y = invert_y, 
                 x_min_max = x_min_max, y_min_max = y_min_max, x = x, y = y)
     
@@ -317,25 +316,30 @@ def plot_synapses(presyn_verts = None, postsyn_verts = None, x = 'x', y = 'y',
     #         x_min_max = x_min_max, y_min_max = y_min_max, x = x, y = y)
 
 
-def plot_layer_lines(y_vals, ax = None, labels = None, buffer_space = .01, line_styles = None):
+def plot_layer_lines(y_vals, ax = None, labels = None, buffer_space = .01, line_styles = None, x_min_max = None):
     """    
     takes a list of y values on which to plot horizontal line across the current x ax.
     Optionally, labels can be provided to label each line.
 
     Args:
         y_vals (list): y value for each line you wish to plot 
+        x_vals (list, optional): x value for each line you wish to plot.
         ax (matplotlib.axes, optional): axis on which to plot the skeleton
             If none is given, will find current axis with plt.gca()
         labels (list, optional): list of str labels for each line. Defaults to None.
         buffer_space (float, optional): percentage of the x range of the plot to  
             have as a buffer between the edge of the plot to the layer labels.
             Defaults to .01.
+        x_min_max (tuple, optional): manually specified x min and x max.
+        line_styles (list, optional): list of dictionaries of line styles for each line.
     """
     
     if ax is None:
         ax = plt.gca()
     # get x vals
-    x_vals = ax.get_xlim()
+    if x_min_max is None:
+        x_min_max = ax.get_xlim()
+    
 
     if labels is None:
         labels = ['']*len(y_vals)
@@ -346,10 +350,10 @@ def plot_layer_lines(y_vals, ax = None, labels = None, buffer_space = .01, line_
         line_styles = [line_styles] * len(y_vals)
 
     for y_val, label, style in zip(y_vals, labels, line_styles):
-        ax.plot([x_vals[0], x_vals[1]], [y_val, y_val], **style)
+        ax.plot([x_min_max[0], x_min_max[1]], [y_val, y_val], **style)
         # add a buffer space between plot and labels
-        buffer = buffer_space * (x_vals[1] - x_vals[0])
-        ax.text(x_vals[1] + buffer, y_val, label, verticalalignment='center')
+        buffer = buffer_space * (x_min_max[1] - x_min_max[0])
+        ax.text(x_min_max[1] + buffer, y_val, label, verticalalignment='center')
 
 
 def plot_layer_poly(layer_poly_json, ax = None, res = 0.3603, size = 1, invert_y = True):
@@ -376,3 +380,101 @@ def plot_layer_poly(layer_poly_json, ax = None, res = 0.3603, size = 1, invert_y
             verts = np.vstack([verts,bound])
         ax.scatter(bound[:,0]*res, bound[:,1]*res, s = size)
     utils.set_xy_lims(ax = ax, verts = verts*res, x = 'x', y = 'y', invert_y=invert_y)
+
+
+def plot_multiple_skels_on_depths(skel_list, depths, space_between = 0, figsize = (26,12), x = 'x',
+                                  axis_lines = 'off', skel_colors = None, title = '', 
+                                  pull_radius = False, radius = None, line_width = 1, 
+                                  plot_soma = False, soma_size = 120, soma_node = None, invert_y = False, 
+                                  skel_alpha = 1, pull_compartment_colors = False, 
+                                  color = 'darkslategray', 
+                                  skel_color_map = {3: "firebrick", 4: "salmon", 2: "steelblue", 1: "olive"},
+                                  x_min_max = None, y_min_max = None, capstyle = 'round', joinstyle = 'round',
+                                  ax = None, line_styles_depths = {"color": "gray", "linewidth": 1, "linestyle": "-"},
+                                  buffer_space_depths = -1.3, 
+                                  depths_labels = ['layer 2/3\nboundary', 'layer 4', 'layer 5', 'layer 6a', 'layer 6b', 'white matter']
+
+                                 ):
+    '''
+    plots multiple skeletons one after the other on the same plot with depth lines
+
+    skel_list (list): list of meshparty.skeleton.Skeleton objects
+    depths (dict): dictionary of depth values for each layer
+    space_between (int float): blank space between skeletons in x
+    figsize (tuple): size of the plot
+    x (str, optional): which dimension to plot in x. x y or z. Defaults to 'x'.
+    axis_lines (str, optional): whether to plot axis lines. Defaults to 'off'. passed in ax.axis(axis_lines)
+    skel_colors (iterable, optional): map of numbers that indicate 
+            color for each vertex recorded in skel_color_map. 
+            Overwrites color argument. Defaults to None.
+    title (str, optional): title to display on plot. Defaults to ''.
+    pull_radius (bool, optional): whether or not to pull and plot the radius from 
+        sk.vertex_properties['radius']. Defaults to False.
+    radius (iterable, optional): radius of each vertex. overwritten if pull_radius.
+        Defaults to None.
+    line_width (int): Width of skeleton lines. also functions as a scalar of values found in meshwork when pull_radius is set to true
+    plot_soma (bool, optional): whether or not to plot the soma. Defaults to False.
+    soma_size (int, optional): size of soma node to display. Defaults to 120.
+    soma_node (int, optional): the index of the soma node in sk.vertices. Defaults to 0.
+    invert_y (bool, optional): whether or not to invert the y axis. Defaults to False.
+    skel_alpha (float): Alpha opacity value of skeleton lines.
+    pull_compartment_colors (bool, optional): whether to pull and plot the compartments in 
+        sk.vertex_properties['compartment']. Defaults to False.
+    color (str, optional): color of all vertices. Defaults to 'darkslategray'.
+    skel_color_map (dict, optional): map of skel_colors values->colors. 
+        Defaults to {3: "firebrick", 4: "salmon", 2: "steelblue", 1: "olive"}.
+    x_min_max (tuple, optional): manually specified x min and x max. 
+        Defaults to None, which will set x min and max to the limits of the vertices.
+    y_min_max (tuple, optional): manually specified y min and x max. 
+        Defaults to None, which will set y min and max to the limits of the vertices.
+    capstyle (str, optional): shape of the endpoints. Defaults to 'round'.
+    joinstyle (str, optional): shape of the points between linecollection pieces. 
+        Defaults to 'round'.
+    ax (matplotlib.axes, optional): axis on which to plot the skeleton
+        If none is given, will find current axis with plt.gca()
+    line_styles_depths (list, optional): list of dictionaries of line styles for each layer line.
+    buffer_space (float, optional): percentage of the x range of the plot to  
+            have as a buffer between the edge of the plot to the layer labels.
+            Defaults to .01.
+    depths_labels (list, optional): list of str labels for each layer. Defaults to None.
+
+    '''
+    fig, ax = plt.subplots(figsize = figsize)
+    past_max = 0
+    x_min = 0
+    x_max = 0
+    
+    x_ax = axis_dict[x]
+    
+    depths_vals = depths.values()
+    
+    for skel in skel_list:
+        
+        current_min = min(skel.vertices[:,x_ax])
+        x_offset = space_between + past_max - current_min
+        
+        x_offset_add = [0,0,0]
+        x_offset_add[x_ax] = x_offset
+        
+        skel._vertices = skel.vertices + x_offset_add
+        
+        x_min_max = [min(x_min, min(skel.vertices[:,x_ax])), max(x_max, max(skel.vertices[:,x_ax])) + space_between]
+        
+        plot_skel(skel, title=title, x = x, y = 'y', pull_radius = pull_radius, radius = radius, 
+                line_width = line_width, plot_soma = plot_soma, soma_size = soma_size, soma_node = soma_node, 
+                invert_y = invert_y, skel_colors = skel_colors, skel_alpha = skel_alpha,
+                pull_compartment_colors = pull_compartment_colors, color = color,
+                skel_color_map = skel_color_map, x_min_max = x_min_max, y_min_max = y_min_max, 
+                capstyle = capstyle, joinstyle = joinstyle, ax = ax)
+        plot_layer_lines(depths_vals, ax = ax, 
+                line_styles = line_styles_depths,
+                buffer_space = buffer_space_depths, labels = depths_labels, x_min_max = x_min_max)
+
+        past_max = max(skel.vertices[:,x_ax])
+        depths_labels = None
+        
+        # prevent invert_y from flipping it over and over lol
+
+    
+    utils.set_xy_lims(ax, invert_y = invert_y, x_min_max = [x_min, past_max + space_between], y_min_max = [0,1200])
+    ax.axis(axis_lines)
