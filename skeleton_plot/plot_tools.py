@@ -440,7 +440,7 @@ def plot_multiple_skels_on_depths(skel_list, depths, space_between = 0, figsize 
 
     '''
     fig, ax = plt.subplots(figsize = figsize)
-    past_max = 0
+    x_max = 0
     x_min = 0
     x_max = 0
     
@@ -451,14 +451,16 @@ def plot_multiple_skels_on_depths(skel_list, depths, space_between = 0, figsize 
     for skel in skel_list:
         
         current_min = min(skel.vertices[:,x_ax])
-        x_offset = space_between + past_max - current_min
+        x_offset = space_between + x_max - current_min
         
         x_offset_add = [0,0,0]
         x_offset_add[x_ax] = x_offset
         
         skel._vertices = skel.vertices + x_offset_add
         
-        x_min_max = [min(x_min, min(skel.vertices[:,x_ax])), max(x_max, max(skel.vertices[:,x_ax])) + space_between]
+        if x_min_max is None:
+            x_min = min(x_min, min(skel.vertices[:,x_ax]))
+            x_max = max(x_max, max(skel.vertices[:,x_ax]) + space_between)
         
         plot_skel(skel, title=title, x = x, y = 'y', pull_radius = pull_radius, radius = radius, 
                 line_width = line_width, plot_soma = plot_soma, soma_size = soma_size, soma_node = soma_node, 
@@ -468,13 +470,17 @@ def plot_multiple_skels_on_depths(skel_list, depths, space_between = 0, figsize 
                 capstyle = capstyle, joinstyle = joinstyle, ax = ax)
         plot_layer_lines(depths_vals, ax = ax, 
                 line_styles = line_styles_depths,
-                buffer_space = buffer_space_depths, labels = depths_labels, x_min_max = x_min_max)
+                buffer_space = buffer_space_depths, labels = depths_labels, x_min_max = [x_min, x_max])
 
-        past_max = max(skel.vertices[:,x_ax])
+            
         depths_labels = None
         
         # prevent invert_y from flipping it over and over lol
 
-    
-    utils.set_xy_lims(ax, invert_y = invert_y, x_min_max = [x_min, past_max + space_between], y_min_max = [0,1200])
+
+    if y_min_max is None:
+        y_min, y_max = ax.get_ybound()
+    else:
+        y_min, y_max = y_min_max
+    utils.set_xy_lims(ax, invert_y = invert_y, x_min_max = [x_min, x_max], y_min_max = [y_min, y_max])
     ax.axis(axis_lines)
