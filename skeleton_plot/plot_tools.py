@@ -382,7 +382,7 @@ def plot_layer_poly(layer_poly_json, ax = None, res = 0.3603, size = 1, invert_y
     utils.set_xy_lims(ax = ax, verts = verts*res, x = 'x', y = 'y', invert_y=invert_y)
 
 
-def plot_multiple_skels_on_depths(skel_list, depths, space_between = 0, figsize = (26,12), x = 'x',
+def plot_skeleton_lineup(skel_list, depths = None, space_between = 0, figsize = (26,12), x = 'x',
                                   axis_lines = 'off', skel_colors = None, title = '', 
                                   pull_radius = False, radius = None, line_width = 1, 
                                   plot_soma = False, soma_size = 120, soma_node = None, invert_y = False, 
@@ -396,10 +396,10 @@ def plot_multiple_skels_on_depths(skel_list, depths, space_between = 0, figsize 
 
                                  ):
     '''
-    plots multiple skeletons one after the other on the same plot with depth lines
+    plots multiple skeletons one after the other on the same plot with optional depth lines
 
     skel_list (list): list of meshparty.skeleton.Skeleton objects
-    depths (dict): dictionary of depth values for each layer
+    depths (dict, optional): dictionary of depth values for each layer
     space_between (int float): blank space between skeletons in x
     figsize (tuple): size of the plot
     x (str, optional): which dimension to plot in x. x y or z. Defaults to 'x'.
@@ -439,14 +439,16 @@ def plot_multiple_skels_on_depths(skel_list, depths, space_between = 0, figsize 
     depths_labels (list, optional): list of str labels for each layer. Defaults to None.
 
     '''
-    fig, ax = plt.subplots(figsize = figsize)
+    if ax is None:
+        ax = plt.gca()
     x_max = 0
     x_min = 0
     x_max = 0
     
     x_ax = axis_dict[x]
-    
-    depths_vals = depths.values()
+
+    if depths is not None:
+        depths_vals = depths.values()
     
     for skel in skel_list:
         
@@ -468,9 +470,10 @@ def plot_multiple_skels_on_depths(skel_list, depths, space_between = 0, figsize 
                 pull_compartment_colors = pull_compartment_colors, color = color,
                 skel_color_map = skel_color_map, x_min_max = x_min_max, y_min_max = y_min_max, 
                 capstyle = capstyle, joinstyle = joinstyle, ax = ax)
-        plot_layer_lines(depths_vals, ax = ax, 
-                line_styles = line_styles_depths,
-                buffer_space = buffer_space_depths, labels = depths_labels, x_min_max = [x_min, x_max])
+        if depths is not None:
+            plot_layer_lines(depths_vals, ax = ax, 
+                    line_styles = line_styles_depths,
+                    buffer_space = buffer_space_depths, labels = depths_labels, x_min_max = [x_min, x_max])
 
             
         depths_labels = None
