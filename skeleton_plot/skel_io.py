@@ -82,7 +82,7 @@ def read_swc(path, columns=SWC_COLUMNS, sep=' ', casts=COLUMN_CASTS):
     """Read an swc file into a pandas dataframe
 
     Args:
-        path (str): path to swc. if cloud path, use https://storage.googleapis.com/path_here
+        path (str or BytesIO from file ptr): path to swc. if cloud path, use https://storage.googleapis.com/path_here
         columns (tuple, optional): column labels for swc file. Defaults to ('id', 'type', 'x', 'y', 'z', 'radius', 'parent').
         sep (str, optional): separator when reading swc into df. Defaults to ' '.
         casts (dict, optional): type casts for columns in swc. Defaults to {'id': int,'parent': int,'type': int}.
@@ -90,7 +90,7 @@ def read_swc(path, columns=SWC_COLUMNS, sep=' ', casts=COLUMN_CASTS):
     Returns:
         df (pd.DataFrame): dataframe of swc data
     """    
-    if "://" not in path:
+    if isinstance(path, str) and "://" not in path:
         path = "file://" + path
 
     df = pd.read_csv(path, names=columns, comment='#', sep=sep)
